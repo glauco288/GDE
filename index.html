@@ -71,7 +71,7 @@
     }
     .preload-fill {
       transform-origin: left center;
-      animation: preloadProgress 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: preloadProgress 2.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
     /* Coluna fixa de turnos sempre à frente dos cards ao rolar horizontalmente */
@@ -186,10 +186,167 @@
         }, 400);
       }
       el.addEventListener('click', fechar);
-      setTimeout(fechar, 2200);
+      setTimeout(fechar, 2000);
     })();
   </script>
 
+  <!-- ===================================================================== -->
+  <!-- TELA DE ACESSO / SELEÇÃO DE UNIDADE                                   -->
+  <!-- ===================================================================== -->
+  <section id="auth-screen" class="hidden flex-1 items-center justify-center p-4 sm:p-6">
+    <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg p-6 sm:p-7">
+      <div class="flex flex-col items-center text-center mb-6">
+        <img
+          src="https://am.senac.br/wp-content/themes/senac/images/logo-senac.png"
+          alt="Senac AM"
+          class="senac-logo h-10 w-auto object-contain mb-3"
+          onerror="this.style.display='none'; document.getElementById('auth-logo-fallback').classList.remove('hidden');"
+        />
+        <span id="auth-logo-fallback" class="hidden px-3 py-1 rounded-lg bg-senac-600 text-white font-bold text-sm mb-3">
+          Senac AM
+        </span>
+        <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          Gestão Pedagógica · Senac AM
+        </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Selecione sua unidade e informe o código de confirmação
+        </p>
+      </div>
+
+      <form id="auth-form" onsubmit="event.preventDefault(); realizarLogin();" class="space-y-4">
+        <div>
+          <label for="auth-select" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Unidade operativa / Acesso
+          </label>
+          <select id="auth-select" onchange="atualizarLabelAuth()"
+            class="w-full text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-senac-500">
+          </select>
+        </div>
+
+        <div>
+          <label id="auth-code-label" for="auth-code" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Código de confirmação da unidade
+          </label>
+          <div class="relative">
+            <input id="auth-code" type="password" autocomplete="off" placeholder="Digite o código"
+              class="w-full text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 pl-3 pr-11 py-2.5 focus:outline-none focus:ring-2 focus:ring-senac-500" />
+            <button type="button" id="auth-toggle-vis" onclick="alternarVisibilidadeCodigo()" title="Mostrar ou ocultar"
+              class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <svg id="auth-eye-icon" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <p id="auth-error" class="hidden mt-2 text-xs font-medium text-rose-600 dark:text-rose-400"></p>
+        </div>
+
+        <button type="submit"
+          class="w-full py-2.5 px-4 rounded-xl bg-senac-600 hover:bg-senac-700 text-white text-sm font-semibold shadow-xs transition">
+          Entrar
+        </button>
+      </form>
+
+      <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 text-center text-[11px] text-slate-400">
+        Uso interno · Gerência de Desenvolvimento Educacional (GDE)
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- APLICAÇÃO PRINCIPAL (EXIBIDA APÓS AUTENTICAÇÃO)                       -->
+  <!-- ===================================================================== -->
+  <div id="app-shell" class="hidden flex-1 flex-col min-h-screen">
+
+  <!-- ===================================================================== -->
+  <!-- CABEÇALHO MULTI-UNIDADE E AÇÕES GLOBAIS                               -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <!-- Logo oficial + Título + Seletor de Unidade -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+          <div class="shrink-0 flex items-center">
+            <img
+              src="https://am.senac.br/wp-content/themes/senac/images/logo-senac.png"
+              alt="Senac AM"
+              class="senac-logo h-8 w-auto object-contain"
+              onerror="this.style.display='none'; document.getElementById('header-logo-fallback').classList.remove('hidden');"
+            />
+            <span id="header-logo-fallback" class="hidden px-2.5 py-1 rounded-lg bg-senac-600 text-white font-bold text-xs tracking-tight">
+              Senac
+            </span>
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">Gestão Pedagógica · Senac AM</h1>
+              <span id="sync-badge" class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                Modo local
+              </span>
+              <span id="gde-badge" class="hidden inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-senac-50 text-senac-700 dark:bg-sky-950/70 dark:text-sky-300 border border-senac-100 dark:border-sky-800/60">
+                GDE · Acesso Total
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Mapa de sala, alocação de docentes e acompanhamento SIG × Real</p>
+          </div>
+        </div>
+
+        <!-- Seletor de Unidade Operativa (12 unidades fixas) -->
+        <div class="flex items-center gap-1.5 sm:ml-2">
+          <label for="unit-select" class="sr-only">Selecionar unidade</label>
+          <select id="unit-select" onchange="trocarUnidade(this.value)"
+            class="text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-senac-500 max-w-full sm:max-w-[340px]">
+          </select>
+        </div>
+      </div>
+
+      <!-- Ações de Persistência e Sessão -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <div id="header-edit-actions" class="flex items-center gap-2 flex-wrap">
+          <button type="button" onclick="exportarJSON()"
+            class="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
+            Exportar JSON
+          </button>
+          <label class="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition cursor-pointer">
+            Importar JSON
+            <input id="input-import-json" type="file" accept=".json,application/json" class="hidden" onchange="importarJSON(this)" />
+          </label>
+          <button type="button" onclick="confirmarResetar()"
+            class="text-xs font-medium px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 transition">
+            Restaurar dados iniciais
+          </button>
+        </div>
+        <button type="button" onclick="sairSessao()"
+          class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
+          title="Sair e trocar de unidade ou perfil">
+          Sair
+        </button>
+      </div>
+    </div>
+
+    <!-- Navegação das Abas -->
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6">
+      <nav id="nav" class="flex gap-1 overflow-x-auto -mb-px" aria-label="Abas principais"></nav>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- CONTEÚDO PRINCIPAL                                                    -->
+  <!-- ===================================================================== -->
+  <main id="app" class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-5"></main>
+
+  <!-- Rodapé -->
+  <footer class="max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-4 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between gap-2">
+    <span>Sincronização em tempo real via Firebase Firestore com backup automático local. Uso interno · GDE Senac AM.</span>
+    <span id="footer-date" class="tabular-nums"></span>
+  </footer>
+
+  </div><!-- /#app-shell -->
+
+  <!-- ===================================================================== -->
+  <!-- MODAL GENÉRICO (CONFIRMAÇÕES)                                         -->
   <!-- ===================================================================== -->
   <!-- CABEÇALHO MULTI-UNIDADE E AÇÕES GLOBAIS                               -->
   <!-- ===================================================================== -->
@@ -290,14 +447,33 @@
   <!-- SheetJS carregado com defer -->
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-  <!-- Firebase JS SDK (compat v10) -->
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <!-- Firebase JS SDK (compat v10.12.5) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 
   <!-- ===================================================================== -->
   <!-- LÓGICA PRINCIPAL DA APLICAÇÃO                                         -->
   <!-- ===================================================================== -->
   <script>
+    /* =========================================================================
+     * CÓDIGOS DE ACESSO POR UNIDADE E SENHA GDE (EDITÁVEL)
+     * ========================================================================= */
+    const CODIGOS_ACESSO = {
+      'cei':      'CEI-7492',
+      'cep-pf':   'PF-3851',
+      'cth':      'CTH-6194',
+      'jt':       'JT-8247',
+      'cep-lsr':  'LSR-5319',
+      'cep-mbi':  'MBI-9462',
+      'cep-mpr':  'MPR-2785',
+      'cep-lb':   'LB-4638',
+      'cep-pjp':  'PJP-7913',
+      'fatese':   'FAT-5826',
+      'cep-cap':  'CAP-3174',
+      'cep-tpnm': 'TPNM-6549',
+      'gde':      'GDE@2026#AM'
+    };
+
     /* =========================================================================
      * CONFIGURAÇÃO DO FIREBASE FIRESTORE (PLANO SPARK - USO INTERNO SENAC AM)
      * ========================================================================= */
@@ -314,7 +490,6 @@
 
     let db = null;
     let unsubUnidade = null;
-    let unsubMeta = null;
     let ultimoPayloadSalvo = '';
 
     if (USAR_FIREBASE) {
@@ -331,17 +506,25 @@
     const FIREBASE_ATIVO = Boolean(USAR_FIREBASE && db);
 
     /* =========================================================================
-     * CONSTANTES E DADOS INICIAIS POR UNIDADE
+     * CONSTANTES E AS 12 UNIDADES FIXAS DO SENAC AM
      * ========================================================================= */
-    const STORAGE_UNITS_KEY = 'gp-senac-am-unidades-v2';
     const STORAGE_PREFIX = 'gp-senac-am-estado-v2:';
     const STORAGE_ACTIVE_UNIT = 'gp-senac-am-unidade-ativa-v2';
+    const SESSION_KEY = 'gp-senac-am-sessao-v1';
 
-    const UNIDADES_PADRAO = [
-      { id: 'cth',    nome: 'CTH · Centro de Turismo e Hospitalidade' },
-      { id: 'cei',    nome: 'CEI · Senac Chapada' },
-      { id: 'jt',     nome: 'JT · Senac Cidade Nova' },
-      { id: 'cep-pf', nome: 'CEP PF · Senac Centro' }
+    const UNIDADES_FIXAS = [
+      { id: 'cei',      nome: 'CEI - Senac Chapada (2 - CEI)' },
+      { id: 'cep-pf',   nome: 'CEP PF - Senac Centro (3 - CEP PF)' },
+      { id: 'cth',      nome: 'Centro de Turismo e Hospitalidade (4 - CTH)' },
+      { id: 'jt',       nome: 'CEP JT - Senac Cidade Nova (5 - CEP JT)' },
+      { id: 'cep-lsr',  nome: 'CEP LSR - Senac Manacapuru (6 - CEP LSR)' },
+      { id: 'cep-mbi',  nome: 'CEP MBI - Senac Itacoatiara (7 - CEP MBI)' },
+      { id: 'cep-mpr',  nome: 'CEP MPR - Senac Parintins (11 - CEP MPR)' },
+      { id: 'cep-lb',   nome: 'CEP LB - Senac Tefé (13 - CEP LB)' },
+      { id: 'cep-pjp',  nome: 'CEP PJP - Senac Coari (14 - CEP PJP)' },
+      { id: 'fatese',   nome: 'Faculdade de Tecnologia Senac (15 - FATESE)' },
+      { id: 'cep-cap',  nome: 'CEP CAP - Senac Borba (16 - CEP CAP)' },
+      { id: 'cep-tpnm', nome: 'CEP TPNM - Senac Maués (17 - CEP TPNM)' }
     ];
 
     const MOTIVOS = ['Não é desta unidade', 'Duplicada', 'Erro de cadastro', 'Outro'];
@@ -473,10 +656,11 @@
     }
 
     /* =========================================================================
-     * ESTADO EM MEMÓRIA
+     * ESTADO EM MEMÓRIA E SESSÃO DE ACESSO
      * ========================================================================= */
-    let unidades = [];
-    let unidadeAtual = 'cth';
+    const unidades = UNIDADES_FIXAS;
+    let sessao = null; // { perfil: 'gde' | 'unidade', unidadeOrigem: string }
+    let unidadeAtual = 'cei';
     let temSabado = false;
     let AMB = [];
     let turmas = [];
@@ -492,6 +676,207 @@
     let mapaFiltro = 'todas';    // 'todas' | 'conflito' | 'sem_docente' | 'encerrando'
     let turmasBusca = '';
     let turmasFiltro = 'todas';  // 'todas' | 'pendencia' | 'conflito' | 'sem_docente'
+
+    function podeEditar() {
+      return Boolean(sessao && (sessao.perfil === 'gde' || sessao.unidadeOrigem === unidadeAtual));
+    }
+
+    function nomeUnidadePorId(id) {
+      return unidades.find(u => u.id === id)?.nome || id;
+    }
+
+    /* =========================================================================
+     * CONTROLE DE ACESSO (TELA DE SELEÇÃO DE UNIDADE / GDE)
+     * ========================================================================= */
+    function montarSelectAuth() {
+      const sel = document.getElementById('auth-select');
+      if (!sel) return;
+      const opsUnidades = unidades
+        .map(u => `<option value="${esc(u.id)}">${esc(u.nome)}</option>`)
+        .join('');
+      sel.innerHTML = `<optgroup label="Unidades Operativas">${opsUnidades}</optgroup>
+        <optgroup label="Administração">
+          <option value="gde">GDE · Gerência de Desenvolvimento Educacional (Acesso total)</option>
+        </optgroup>`;
+      atualizarLabelAuth();
+    }
+
+    function atualizarLabelAuth() {
+      const sel = document.getElementById('auth-select');
+      const lbl = document.getElementById('auth-code-label');
+      const inp = document.getElementById('auth-code');
+      const err = document.getElementById('auth-error');
+      if (!sel || !lbl || !inp) return;
+      const ehGde = sel.value === 'gde';
+      lbl.textContent = ehGde ? 'Senha de administrador GDE' : 'Código de confirmação da unidade';
+      inp.placeholder = ehGde ? 'Digite a senha de administrador' : 'Digite o código da unidade';
+      if (err) {
+        err.textContent = '';
+        err.classList.add('hidden');
+      }
+    }
+
+    function alternarVisibilidadeCodigo() {
+      const inp = document.getElementById('auth-code');
+      if (!inp) return;
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      inp.focus();
+    }
+
+    function exibirTelaAcesso() {
+      if (typeof unsubUnidade === 'function') {
+        unsubUnidade();
+        unsubUnidade = null;
+      }
+      document.getElementById('app-shell')?.classList.add('hidden');
+      document.getElementById('app-shell')?.classList.remove('flex');
+      const auth = document.getElementById('auth-screen');
+      if (auth) {
+        auth.classList.remove('hidden');
+        auth.classList.add('flex');
+      }
+      montarSelectAuth();
+      const inp = document.getElementById('auth-code');
+      if (inp) {
+        inp.value = '';
+        inp.type = 'password';
+      }
+    }
+
+    function exibirAppPrincipal() {
+      const auth = document.getElementById('auth-screen');
+      if (auth) {
+        auth.classList.add('hidden');
+        auth.classList.remove('flex');
+      }
+      const shell = document.getElementById('app-shell');
+      if (shell) {
+        shell.classList.remove('hidden');
+        shell.classList.add('flex');
+      }
+      atualizarControlesSessao();
+      renderSelectUnidades();
+      loadUnidade(unidadeAtual);
+    }
+
+    function realizarLogin() {
+      const sel = document.getElementById('auth-select');
+      const inp = document.getElementById('auth-code');
+      const err = document.getElementById('auth-error');
+      if (!sel || !inp) return;
+
+      const escolha = sel.value;
+      const digitado = inp.value.trim();
+      const esperado = CODIGOS_ACESSO[escolha];
+
+      const valido = escolha === 'gde'
+        ? (digitado === esperado)
+        : (digitado.toUpperCase() === String(esperado || '').toUpperCase());
+
+      if (!valido) {
+        if (err) {
+          err.textContent = escolha === 'gde'
+            ? 'Senha de administrador incorreta. Tente novamente.'
+            : 'Código de confirmação inválido para esta unidade.';
+          err.classList.remove('hidden');
+        }
+        inp.focus();
+        inp.select();
+        return;
+      }
+
+      if (err) {
+        err.textContent = '';
+        err.classList.add('hidden');
+      }
+
+      sessao = escolha === 'gde'
+        ? { perfil: 'gde', unidadeOrigem: 'gde' }
+        : { perfil: 'unidade', unidadeOrigem: escolha };
+
+      try {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessao));
+      } catch (e) {}
+
+      if (sessao.perfil === 'gde') {
+        try {
+          const savedActive = localStorage.getItem(STORAGE_ACTIVE_UNIT);
+          unidadeAtual = (savedActive && unidades.some(u => u.id === savedActive)) ? savedActive : unidades[0].id;
+        } catch (e) {
+          unidadeAtual = unidades[0].id;
+        }
+      } else {
+        unidadeAtual = sessao.unidadeOrigem;
+      }
+
+      aba = 'mapa';
+      exibirAppPrincipal();
+      toast(sessao.perfil === 'gde'
+        ? 'Acesso GDE liberado com permissão total.'
+        : `Bem-vindo(a) à unidade ${nomeUnidadePorId(unidadeAtual)}.`, 'ok');
+    }
+
+    function sairSessao() {
+      sessao = null;
+      try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+      mapaBusca = '';
+      mapaFiltro = 'todas';
+      turmasBusca = '';
+      turmasFiltro = 'todas';
+      aba = 'mapa';
+      exibirTelaAcesso();
+    }
+
+    function atualizarControlesSessao() {
+      const gdeBadge = document.getElementById('gde-badge');
+      const editActions = document.getElementById('header-edit-actions');
+      if (gdeBadge) {
+        if (sessao && sessao.perfil === 'gde') gdeBadge.classList.remove('hidden');
+        else gdeBadge.classList.add('hidden');
+      }
+      if (editActions) {
+        if (podeEditar()) editActions.classList.remove('hidden');
+        else editActions.classList.add('hidden');
+      }
+    }
+
+    function voltarParaMinhaUnidade() {
+      if (sessao && sessao.perfil === 'unidade') {
+        trocarUnidade(sessao.unidadeOrigem);
+      }
+    }
+
+    function iniciarSessao() {
+      try {
+        const raw = sessionStorage.getItem(SESSION_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && (parsed.perfil === 'gde' || (parsed.perfil === 'unidade' && unidades.some(u => u.id === parsed.unidadeOrigem)))) {
+            sessao = parsed;
+          }
+        }
+      } catch (e) {
+        sessao = null;
+      }
+
+      if (!sessao) {
+        exibirTelaAcesso();
+        return;
+      }
+
+      if (sessao.perfil === 'gde') {
+        try {
+          const savedActive = localStorage.getItem(STORAGE_ACTIVE_UNIT);
+          unidadeAtual = (savedActive && unidades.some(u => u.id === savedActive)) ? savedActive : unidades[0].id;
+        } catch (e) {
+          unidadeAtual = unidades[0].id;
+        }
+      } else {
+        unidadeAtual = sessao.unidadeOrigem;
+      }
+
+      exibirAppPrincipal();
+    }
 
     /* =========================================================================
      * UTILITÁRIOS PUROS
@@ -547,6 +932,7 @@
     }
 
     function toggleSabado(ativo) {
+      if (!podeEditar()) return;
       temSabado = Boolean(ativo);
       save();
       render();
@@ -706,31 +1092,17 @@
       }
     }
 
-    function salvarListaUnidades() {
-      try {
-        localStorage.setItem(STORAGE_UNITS_KEY, JSON.stringify(unidades));
-      } catch (e) {}
-
-      if (FIREBASE_ATIVO) {
-        return db.collection(FIRESTORE_COLECAO).doc('_meta').set({
-          unidades: JSON.parse(JSON.stringify(unidades.map(u => ({ id: u.id, nome: u.nome })))),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).catch(err => {
-          console.error('Erro ao salvar _meta no Firestore:', err);
-          if (err && err.code === 'permission-denied') {
-            atualizarSeloSync('permission');
-          }
-          throw err;
-        });
-      }
-      return Promise.resolve();
-    }
-
     function renderSelectUnidades() {
       const sel = document.getElementById('unit-select');
       if (!sel) return;
       sel.innerHTML = unidades
-        .map(u => `<option value="${esc(u.id)}" ${u.id === unidadeAtual ? 'selected' : ''}>${esc(u.nome)}</option>`)
+        .map(u => {
+          let sufixo = '';
+          if (sessao && sessao.perfil === 'unidade') {
+            sufixo = u.id === sessao.unidadeOrigem ? ' ★ (sua unidade)' : ' (consulta)';
+          }
+          return `<option value="${esc(u.id)}" ${u.id === unidadeAtual ? 'selected' : ''}>${esc(u.nome + sufixo)}</option>`;
+        })
         .join('');
     }
 
@@ -794,6 +1166,7 @@
     }
 
     function save() {
+      if (!podeEditar()) return;
       const clean = normalizarEstado(snapshotEstado());
       const str = JSON.stringify(clean);
       ultimoPayloadSalvo = str;
@@ -823,12 +1196,20 @@
     }
 
     function trocarUnidade(unitId) {
+      if (!unidades.some(u => u.id === unitId)) return;
       unidadeAtual = unitId;
-      try { localStorage.setItem(STORAGE_ACTIVE_UNIT, unitId); } catch (e) {}
+      if (sessao && sessao.perfil === 'gde') {
+        try { localStorage.setItem(STORAGE_ACTIVE_UNIT, unitId); } catch (e) {}
+      }
+      if (!podeEditar()) {
+        aba = 'mapa';
+      }
       mapaBusca = '';
       mapaFiltro = 'todas';
       turmasBusca = '';
       turmasFiltro = 'todas';
+      atualizarControlesSessao();
+      renderSelectUnidades();
       loadUnidade(unitId);
     }
 
@@ -836,6 +1217,29 @@
      * EXPORTAR / IMPORTAR BACKUP JSON (COM SEPARAÇÃO DE TRY/CATCH PARA FIRESTORE)
      * ========================================================================= */
     function exportarJSON() {
+      if (!podeEditar()) return;
+
+      if (sessao && sessao.perfil === 'unidade') {
+        const payloadUni = {
+          versao: 3,
+          tipo: 'unidade',
+          unidade: unidadeAtual,
+          exportadoEm: agoraIso(),
+          ...normalizarEstado(snapshotEstado())
+        };
+        const blob = new Blob([JSON.stringify(payloadUni, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `gestao-pedagogica-${unidadeAtual}-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast(`Backup da unidade ${nomeUnidadePorId(unidadeAtual)} exportado em JSON.`, 'ok');
+        return;
+      }
+
       const estados = {};
       unidades.forEach(u => {
         if (u.id === unidadeAtual) {
@@ -868,10 +1272,14 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast('Backup completo (todas as unidades) exportado em JSON.', 'ok');
+      toast('Backup completo (todas as 12 unidades) exportado em JSON.', 'ok');
     }
 
     function importarJSON(inputEl) {
+      if (!podeEditar()) {
+        if (inputEl) inputEl.value = '';
+        return;
+      }
       const file = inputEl && inputEl.files ? inputEl.files[0] : null;
       if (!file) return;
 
@@ -897,26 +1305,40 @@
           return;
         }
 
-        // 2) APLICAÇÃO IMEDIATA NO LOCALSTORAGE E NA TELA
+        // 2) APLICAÇÃO IMEDIATA NO LOCALSTORAGE E NA TELA (RESPEITANDO PERMISSÃO DO PERFIL)
         const estadosParaNuvem = {};
+        const ehGde = Boolean(sessao && sessao.perfil === 'gde');
+
         if (ehMulti) {
-          if (Array.isArray(d.unidades) && d.unidades.length) {
-            unidades = d.unidades.map(u => ({ id: String(u.id), nome: String(u.nome) }));
-            try { localStorage.setItem(STORAGE_UNITS_KEY, JSON.stringify(unidades)); } catch (err) {}
+          if (ehGde) {
+            Object.entries(d.estados).forEach(([uid, est]) => {
+              if (!unidades.some(u => u.id === uid)) return;
+              const clean = normalizarEstado(est);
+              estadosParaNuvem[uid] = clean;
+              try { localStorage.setItem(STORAGE_PREFIX + uid, JSON.stringify(clean)); } catch (err) {}
+            });
+            if (d.unidadeAtiva && unidades.some(u => u.id === d.unidadeAtiva)) {
+              unidadeAtual = d.unidadeAtiva;
+              try { localStorage.setItem(STORAGE_ACTIVE_UNIT, unidadeAtual); } catch (err) {}
+            }
+            renderSelectUnidades();
+            aplicarEstado(estadosParaNuvem[unidadeAtual] || estadoInicialUnidade(unidadeAtual));
+            ultimoPayloadSalvo = JSON.stringify(snapshotEstado());
+            render();
+          } else {
+            const estPropria = d.estados[unidadeAtual];
+            if (!estPropria) {
+              toast(`Este backup multi-unidade não contém dados para ${nomeUnidadePorId(unidadeAtual)}.`, 'err');
+              if (inputEl) inputEl.value = '';
+              return;
+            }
+            const clean = normalizarEstado(estPropria);
+            estadosParaNuvem[unidadeAtual] = clean;
+            try { localStorage.setItem(STORAGE_PREFIX + unidadeAtual, JSON.stringify(clean)); } catch (err) {}
+            aplicarEstado(clean);
+            ultimoPayloadSalvo = JSON.stringify(snapshotEstado());
+            render();
           }
-          Object.entries(d.estados).forEach(([uid, est]) => {
-            const clean = normalizarEstado(est);
-            estadosParaNuvem[uid] = clean;
-            try { localStorage.setItem(STORAGE_PREFIX + uid, JSON.stringify(clean)); } catch (err) {}
-          });
-          if (d.unidadeAtiva && unidades.some(u => u.id === d.unidadeAtiva)) {
-            unidadeAtual = d.unidadeAtiva;
-            try { localStorage.setItem(STORAGE_ACTIVE_UNIT, unidadeAtual); } catch (err) {}
-          }
-          renderSelectUnidades();
-          aplicarEstado(estadosParaNuvem[unidadeAtual] || estadoInicialUnidade(unidadeAtual));
-          ultimoPayloadSalvo = JSON.stringify(snapshotEstado());
-          render();
         } else {
           const clean = normalizarEstado(d);
           estadosParaNuvem[unidadeAtual] = clean;
@@ -936,13 +1358,6 @@
 
         try {
           atualizarSeloSync('syncing');
-          if (ehMulti) {
-            await db.collection(FIRESTORE_COLECAO).doc('_meta').set({
-              unidades: JSON.parse(JSON.stringify(unidades.map(u => ({ id: u.id, nome: u.nome })))),
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-          }
-
           const entries = Object.entries(estadosParaNuvem);
           for (const [uid, clean] of entries) {
             const dadosSemUndefined = JSON.parse(JSON.stringify(clean));
@@ -993,47 +1408,9 @@
       b.classList.remove('flex');
     }
 
-    function abrirModalUnidade() {
-      abrirModal(
-        'Nova unidade operativa',
-        `<div class="space-y-3">
-          <div>
-            <label class="block text-xs font-medium text-slate-500 mb-1">Sigla / Código curto</label>
-            <input id="nova-u-id" type="text" placeholder="Ex.: itacoatiara" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-500 mb-1">Nome de exibição</label>
-            <input id="nova-u-nome" type="text" placeholder="Ex.: CEP Itacoatiara" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm" />
-          </div>
-        </div>`,
-        `<button type="button" onclick="fecharModal()" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium">Cancelar</button>
-         <button type="button" onclick="criarUnidade()" class="px-3 py-1.5 rounded-lg bg-senac-600 hover:bg-senac-700 text-white text-xs font-semibold">Criar unidade</button>`
-      );
-      setTimeout(() => document.getElementById('nova-u-id')?.focus(), 50);
-    }
-
-    function criarUnidade() {
-      const rawId = (document.getElementById('nova-u-id')?.value || '').trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
-      const nome = (document.getElementById('nova-u-nome')?.value || '').trim();
-      if (!rawId || !nome) {
-        toast('Informe a sigla e o nome da unidade.', 'err');
-        return;
-      }
-      if (unidades.some(u => u.id === rawId)) {
-        toast('Já existe uma unidade com essa sigla.', 'err');
-        return;
-      }
-      unidades.push({ id: rawId, nome });
-      salvarListaUnidades();
-      renderSelectUnidades();
-      fecharModal();
-      trocarUnidade(rawId);
-      save();
-      toast(`Unidade "${nome}" criada.`, 'ok');
-    }
-
     function confirmarResetar() {
-      const uNome = unidades.find(u => u.id === unidadeAtual)?.nome || unidadeAtual;
+      if (!podeEditar()) return;
+      const uNome = nomeUnidadePorId(unidadeAtual);
       abrirModal(
         'Restaurar dados iniciais',
         `<p>Deseja restaurar os dados iniciais da unidade <b>${esc(uNome)}</b>? As alterações não exportadas desta unidade serão substituídas.</p>`,
@@ -1043,6 +1420,7 @@
     }
 
     function executarReset() {
+      if (!podeEditar()) return;
       fecharModal();
       aplicarEstado(estadoInicialUnidade(unidadeAtual));
       save();
@@ -1069,9 +1447,10 @@
     }
 
     /* =========================================================================
-     * MUTAÇÕES DE TURMAS, AMBIENTES E DOCENTES
+     * MUTAÇÕES DE TURMAS, AMBIENTES E DOCENTES (TRAVADAS POR podeEditar())
      * ========================================================================= */
     function upd(id, campo, valor) {
+      if (!podeEditar()) return;
       const t = turmas.find(x => x.id === id);
       if (!t) return;
       let novo;
@@ -1088,6 +1467,7 @@
     }
 
     function updAmb(id, campo, valor) {
+      if (!podeEditar()) return;
       const a = AMB.find(x => x.id === id);
       if (!a) return;
       if (campo === 'cap') a.cap = Number(valor) || 0;
@@ -1098,6 +1478,7 @@
     }
 
     function delAmb(id) {
+      if (!podeEditar()) return;
       if (turmas.some(t => t.sala === id)) return;
       AMB = AMB.filter(a => a.id !== id);
       save();
@@ -1105,6 +1486,7 @@
     }
 
     function addAmb() {
+      if (!podeEditar()) return;
       const n = (document.getElementById('an')?.value || '').trim();
       if (!n) return;
       const tipo = document.getElementById('at')?.value || 'Sala';
@@ -1117,6 +1499,7 @@
     }
 
     function addDoc() {
+      if (!podeEditar()) return;
       const v = (document.getElementById('dn')?.value || '').trim();
       if (!v) return;
       if (docentes.some(d => norm(d) === norm(v))) {
@@ -1130,6 +1513,7 @@
     }
 
     function iniciarEdicaoDoc(i) {
+      if (!podeEditar()) return;
       docEditIdx = i;
       render();
       setTimeout(() => {
@@ -1147,6 +1531,7 @@
     }
 
     function salvarEdicaoDoc(i) {
+      if (!podeEditar()) return;
       const inp = document.getElementById('doc-edit-' + i);
       const novo = (inp?.value || '').trim();
       const antigo = docentes[i];
@@ -1174,6 +1559,7 @@
     }
 
     function delDoc(i) {
+      if (!podeEditar()) return;
       docentes.splice(i, 1);
       if (docEditIdx === i) docEditIdx = null;
       save();
@@ -1181,6 +1567,7 @@
     }
 
     function ocultar(id) {
+      if (!podeEditar()) return;
       const motivo = document.getElementById('mot-' + id)?.value || 'Outro';
       const t = turmas.find(x => x.id === id);
       if (!t) return;
@@ -1191,6 +1578,7 @@
     }
 
     function restaurar(id) {
+      if (!podeEditar()) return;
       const t = turmas.find(x => x.id === id);
       if (!t) return;
       registrar(t, 'oculta', t.oculta, null, 'manual');
@@ -1272,6 +1660,7 @@
     }
 
     function confirmarImportacao() {
+      if (!podeEditar()) return;
       const p = preview;
       if (!p || p.erro) return;
       p.novas.forEach(n => {
@@ -1465,7 +1854,10 @@
      * RENDERIZAÇÃO DAS ABAS
      * ========================================================================= */
     function nav() {
-      document.getElementById('nav').innerHTML = Object.entries(TABS)
+      const editavel = podeEditar();
+      if (!editavel) aba = 'mapa';
+      const abasVisiveis = editavel ? Object.entries(TABS) : [['mapa', TABS.mapa]];
+      document.getElementById('nav').innerHTML = abasVisiveis
         .map(([k, v]) => `<button type="button" onclick="aba='${k}';render()" class="px-3.5 py-2.5 text-sm whitespace-nowrap border-b-2 transition ${k === aba ? 'border-senac-600 text-senac-600 dark:text-sky-400 dark:border-sky-400 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}">${v}</button>`)
         .join('');
     }
@@ -1584,10 +1976,12 @@
             <div class="text-xs font-medium">${turnoPrincipal(t)}</div>
             <div class="text-[11px] text-slate-500">${t.ini}–${t.fim}</div>
             <div class="text-[11px] text-slate-400">${esc(t.periodo)}</div>
-            <select onchange="upd('${t.id}','dias',this.value)" class="mt-1 text-[11px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-1.5 py-0.5">
-              <option value="sem" ${!ehTurmaSabado(t) ? 'selected' : ''}>Seg a Sex</option>
-              <option value="sab" ${ehTurmaSabado(t) ? 'selected' : ''}>Sábado</option>
-            </select>
+            ${(temSabado || ehTurmaSabado(t))
+              ? `<select onchange="upd('${t.id}','dias',this.value)" class="mt-1 text-[11px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-1.5 py-0.5">
+                   <option value="sem" ${!ehTurmaSabado(t) ? 'selected' : ''}>Seg a Sex</option>
+                   <option value="sab" ${ehTurmaSabado(t) ? 'selected' : ''}>Sábado</option>
+                 </select>`
+              : ''}
           </td>
           <td class="py-2.5 px-2 align-top">
             <select onchange="upd('${t.id}','sala',this.value)" class="text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5 max-w-[175px]">${opSala(t)}</select>
@@ -1619,6 +2013,7 @@
 
     const VIEWS = {
       mapa() {
+        const editavel = podeEditar();
         const ambUni = AMB.filter(a => !a.externa);
         const ambExt = AMB.filter(a => a.externa);
         const idsUni = new Set(ambUni.map(a => a.id));
@@ -1628,7 +2023,20 @@
 
         const chip = (id, label) => `<button type="button" onclick="setMapaFiltro('${id}')" class="text-xs px-3 py-1.5 rounded-full border transition ${mapaFiltro === id ? 'bg-senac-600 text-white border-senac-600 font-medium' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'}">${label}</button>`;
 
-        return `<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+        const bannerSomenteLeitura = !editavel && sessao && sessao.perfil === 'unidade'
+          ? `<div class="mb-4 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/90 dark:bg-amber-950/40 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+               <p class="text-xs text-amber-900 dark:text-amber-200">
+                 <b>Modo somente leitura</b> · Você está consultando a lotação de outra unidade. Para editar, volte para <b>${esc(nomeUnidadePorId(sessao.unidadeOrigem))}</b>.
+               </p>
+               <button type="button" onclick="voltarParaMinhaUnidade()"
+                 class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition self-start sm:self-auto">
+                 Voltar para minha unidade
+               </button>
+             </div>`
+          : '';
+
+        return `${bannerSomenteLeitura}
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
           <!-- Sub-abas Salas da unidade vs Aulas externas + Sábado -->
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
             <div class="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 gap-1 self-start">
@@ -1640,10 +2048,12 @@
               </button>
             </div>
 
-            <label class="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer select-none">
-              <input type="checkbox" ${temSabado ? 'checked' : ''} onchange="toggleSabado(this.checked)" class="rounded border-slate-300 text-senac-600 focus:ring-senac-500" />
-              Incluir turno Sábado
-            </label>
+            ${editavel
+              ? `<label class="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+                   <input type="checkbox" ${temSabado ? 'checked' : ''} onchange="toggleSabado(this.checked)" class="rounded border-slate-300 text-senac-600 focus:ring-senac-500" />
+                   Incluir turno Sábado
+                 </label>`
+              : ''}
           </div>
 
           <!-- Barra de pesquisa + Chips -->
@@ -1922,7 +2332,9 @@
     };
 
     function render() {
+      atualizarControlesSessao();
       nav();
+      if (!podeEditar()) aba = 'mapa';
       document.getElementById('app').innerHTML = VIEWS[aba]();
       if (aba === 'mapa') renderMapaGrade();
       if (aba === 'turmas') renderTurmasTabela();
@@ -1930,9 +2342,8 @@
       if (fd) fd.textContent = `Referência: ${hojeTxt()}`;
     }
 
-    // Inicialização
-    carregarListaUnidades();
-    loadUnidade(unidadeAtual);
+    // Inicialização com controle de sessão
+    iniciarSessao();
   </script>
 </body>
 </html>
