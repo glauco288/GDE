@@ -50,10 +50,28 @@
     #preloader {
       position: fixed;
       inset: 0;
-      z-index: 9999;
+      z-index: 99999;
       background-color: #ffffff;
       color: #0f172a;
       transition: opacity 0.4s ease;
+    }
+    @media (prefers-color-scheme: dark) {
+      #preloader {
+        background-color: #0f172a;
+        color: #f1f5f9;
+      }
+    }
+    #preloader.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    @keyframes preloadProgress {
+      0% { transform: scaleX(0); }
+      100% { transform: scaleX(1); }
+    }
+    .preload-fill {
+      transform-origin: left center;
+      animation: preloadProgress 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
     @media (prefers-color-scheme: dark) {
       #preloader {
@@ -186,14 +204,14 @@
         }, 400);
       }
       el.addEventListener('click', fechar);
-      setTimeout(fechar, 2000);
+      setTimeout(fechar, 2200);
     })();
   </script>
 
   <!-- ===================================================================== -->
   <!-- TELA DE ACESSO / SELEÇÃO DE UNIDADE                                   -->
   <!-- ===================================================================== -->
-  <section id="auth-screen" class="hidden flex-1 items-center justify-center p-4 sm:p-6">
+  <section id="auth-screen" style="display:none; min-height: 100vh;" class="items-center justify-center p-4 sm:p-6">
     <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg p-6 sm:p-7">
       <div class="flex flex-col items-center text-center mb-6">
         <img
@@ -256,7 +274,7 @@
   <!-- ===================================================================== -->
   <!-- APLICAÇÃO PRINCIPAL (EXIBIDA APÓS AUTENTICAÇÃO)                       -->
   <!-- ===================================================================== -->
-  <div id="app-shell" class="hidden flex-1 flex-col min-h-screen">
+  <div id="app-shell" style="display:none;" class="flex-1 flex-col min-h-screen">
 
   <!-- ===================================================================== -->
   <!-- CABEÇALHO MULTI-UNIDADE E AÇÕES GLOBAIS                               -->
@@ -285,9 +303,7 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                 Modo local
               </span>
-              <span id="gde-badge" class="hidden inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-senac-50 text-senac-700 dark:bg-sky-950/70 dark:text-sky-300 border border-senac-100 dark:border-sky-800/60">
-                GDE · Acesso Total
-              </span>
+              <span id="profile-badge" class="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-senac-50 text-senac-700 dark:bg-sky-950/70 dark:text-sky-300 border border-senac-100 dark:border-sky-800/60"></span>
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400">Mapa de sala, alocação de docentes e acompanhamento SIG × Real</p>
           </div>
@@ -313,8 +329,8 @@
             Importar JSON
             <input id="input-import-json" type="file" accept=".json,application/json" class="hidden" onchange="importarJSON(this)" />
           </label>
-          <button type="button" onclick="confirmarResetar()"
-            class="text-xs font-medium px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 transition">
+          <button id="btn-reset-inicial" type="button" onclick="confirmarResetar()"
+            class="hidden text-xs font-medium px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 transition">
             Restaurar dados iniciais
           </button>
         </div>
@@ -347,88 +363,6 @@
 
   <!-- ===================================================================== -->
   <!-- MODAL GENÉRICO (CONFIRMAÇÕES)                                         -->
-  <!-- ===================================================================== -->
-  <!-- CABEÇALHO MULTI-UNIDADE E AÇÕES GLOBAIS                               -->
-  <!-- ===================================================================== -->
-  <header class="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800">
-    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-      <!-- Logo oficial + Título + Seletor de Unidade -->
-      <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
-        <div class="flex items-center gap-3">
-          <div class="shrink-0 flex items-center">
-            <img
-              src="https://am.senac.br/wp-content/themes/senac/images/logo-senac.png"
-              alt="Senac AM"
-              class="senac-logo h-8 w-auto object-contain"
-              onerror="this.style.display='none'; document.getElementById('header-logo-fallback').classList.remove('hidden');"
-            />
-            <span id="header-logo-fallback" class="hidden px-2.5 py-1 rounded-lg bg-senac-600 text-white font-bold text-xs tracking-tight">
-              Senac
-            </span>
-          </div>
-
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">Gestão Pedagógica · Senac AM</h1>
-              <span id="sync-badge" class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                Modo local
-              </span>
-            </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Mapa de sala, alocação de docentes e acompanhamento SIG × Real</p>
-          </div>
-        </div>
-
-        <!-- Seletor de Unidade Operativa -->
-        <div class="flex items-center gap-1.5 sm:ml-2">
-          <label for="unit-select" class="sr-only">Selecionar unidade</label>
-          <select id="unit-select" onchange="trocarUnidade(this.value)"
-            class="text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-senac-500 max-w-full sm:max-w-[290px]">
-          </select>
-          <button type="button" onclick="abrirModalUnidade()"
-            class="text-xs font-semibold px-2.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition whitespace-nowrap"
-            title="Cadastrar nova unidade operativa">
-            + Unidade
-          </button>
-        </div>
-      </div>
-
-      <!-- Ações de Persistência -->
-      <div class="flex items-center gap-2 flex-wrap">
-        <button type="button" onclick="exportarJSON()"
-          class="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
-          Exportar JSON
-        </button>
-        <label class="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition cursor-pointer">
-          Importar JSON
-          <input id="input-import-json" type="file" accept=".json,application/json" class="hidden" onchange="importarJSON(this)" />
-        </label>
-        <button type="button" onclick="confirmarResetar()"
-          class="text-xs font-medium px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 transition">
-          Restaurar dados iniciais
-        </button>
-      </div>
-    </div>
-
-    <!-- Navegação das 6 Abas -->
-    <div class="max-w-[1440px] mx-auto px-4 sm:px-6">
-      <nav id="nav" class="flex gap-1 overflow-x-auto -mb-px" aria-label="Abas principais"></nav>
-    </div>
-  </header>
-
-  <!-- ===================================================================== -->
-  <!-- CONTEÚDO PRINCIPAL                                                    -->
-  <!-- ===================================================================== -->
-  <main id="app" class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-5"></main>
-
-  <!-- Rodapé -->
-  <footer class="max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-4 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between gap-2">
-    <span>Sincronização em tempo real via Firebase Firestore com backup automático local. Uso interno · GDE Senac AM.</span>
-    <span id="footer-date" class="tabular-nums"></span>
-  </footer>
-
-  <!-- ===================================================================== -->
-  <!-- MODAL GENÉRICO (CONFIRMAÇÕES E CADASTRO DE UNIDADE)                   -->
   <!-- ===================================================================== -->
   <div id="modal-backdrop" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl max-w-md w-full p-5">
@@ -696,7 +630,7 @@
         .join('');
       sel.innerHTML = `<optgroup label="Unidades Operativas">${opsUnidades}</optgroup>
         <optgroup label="Administração">
-          <option value="gde">GDE · Gerência de Desenvolvimento Educacional (Acesso total)</option>
+          <option value="gde">GDE · Acesso Total (Gerência de Desenvolvimento Educacional)</option>
         </optgroup>`;
       atualizarLabelAuth();
     }
@@ -728,12 +662,13 @@
         unsubUnidade();
         unsubUnidade = null;
       }
-      document.getElementById('app-shell')?.classList.add('hidden');
-      document.getElementById('app-shell')?.classList.remove('flex');
+      const shell = document.getElementById('app-shell');
+      if (shell) {
+        shell.style.display = 'none';
+      }
       const auth = document.getElementById('auth-screen');
       if (auth) {
-        auth.classList.remove('hidden');
-        auth.classList.add('flex');
+        auth.style.display = 'flex';
       }
       montarSelectAuth();
       const inp = document.getElementById('auth-code');
@@ -746,13 +681,11 @@
     function exibirAppPrincipal() {
       const auth = document.getElementById('auth-screen');
       if (auth) {
-        auth.classList.add('hidden');
-        auth.classList.remove('flex');
+        auth.style.display = 'none';
       }
       const shell = document.getElementById('app-shell');
       if (shell) {
-        shell.classList.remove('hidden');
-        shell.classList.add('flex');
+        shell.style.display = 'flex';
       }
       atualizarControlesSessao();
       renderSelectUnidades();
@@ -828,15 +761,32 @@
     }
 
     function atualizarControlesSessao() {
-      const gdeBadge = document.getElementById('gde-badge');
+      const profileBadge = document.getElementById('profile-badge');
       const editActions = document.getElementById('header-edit-actions');
-      if (gdeBadge) {
-        if (sessao && sessao.perfil === 'gde') gdeBadge.classList.remove('hidden');
-        else gdeBadge.classList.add('hidden');
+      const btnReset = document.getElementById('btn-reset-inicial');
+      const ehGde = Boolean(sessao && sessao.perfil === 'gde');
+
+      if (profileBadge) {
+        if (ehGde) {
+          profileBadge.textContent = 'GDE · Acesso Total';
+          profileBadge.className = 'inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-senac-50 text-senac-700 dark:bg-sky-950/70 dark:text-sky-300 border border-senac-100 dark:border-sky-800/60';
+        } else if (sessao) {
+          const sigla = sessao.unidadeOrigem.toUpperCase();
+          profileBadge.textContent = podeEditar() ? `Perfil: ${sigla}` : `Perfil: ${sigla} (consulta)`;
+          profileBadge.className = podeEditar()
+            ? 'inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+            : 'inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60';
+        }
       }
+
       if (editActions) {
         if (podeEditar()) editActions.classList.remove('hidden');
         else editActions.classList.add('hidden');
+      }
+
+      if (btnReset) {
+        if (ehGde) btnReset.classList.remove('hidden');
+        else btnReset.classList.add('hidden');
       }
     }
 
@@ -1040,55 +990,6 @@
       } else {
         el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Firebase · Online`;
         el.className = 'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60';
-      }
-    }
-
-    function carregarListaUnidades() {
-      try {
-        const raw = localStorage.getItem(STORAGE_UNITS_KEY);
-        unidades = raw ? JSON.parse(raw) : UNIDADES_PADRAO.map(u => ({ ...u }));
-        if (!Array.isArray(unidades) || !unidades.length) {
-          unidades = UNIDADES_PADRAO.map(u => ({ ...u }));
-        }
-      } catch (e) {
-        unidades = UNIDADES_PADRAO.map(u => ({ ...u }));
-      }
-      try {
-        const savedActive = localStorage.getItem(STORAGE_ACTIVE_UNIT);
-        unidadeAtual = (savedActive && unidades.some(u => u.id === savedActive)) ? savedActive : unidades[0].id;
-      } catch (e) {
-        unidadeAtual = unidades[0].id;
-      }
-      renderSelectUnidades();
-
-      if (FIREBASE_ATIVO) {
-        if (typeof unsubMeta === 'function') {
-          unsubMeta();
-          unsubMeta = null;
-        }
-        unsubMeta = db.collection(FIRESTORE_COLECAO).doc('_meta').onSnapshot(
-          snap => {
-            if (snap.exists) {
-              const data = snap.data();
-              if (Array.isArray(data?.unidades) && data.unidades.length) {
-                unidades = data.unidades.map(u => ({ id: String(u.id), nome: String(u.nome) }));
-                try { localStorage.setItem(STORAGE_UNITS_KEY, JSON.stringify(unidades)); } catch (e) {}
-                if (!unidades.some(u => u.id === unidadeAtual)) {
-                  unidadeAtual = unidades[0].id;
-                }
-                renderSelectUnidades();
-              }
-            } else {
-              salvarListaUnidades();
-            }
-          },
-          err => {
-            console.error('Erro Firestore _meta onSnapshot:', err);
-            if (err && err.code === 'permission-denied') {
-              atualizarSeloSync('permission');
-            }
-          }
-        );
       }
     }
 
@@ -1409,7 +1310,7 @@
     }
 
     function confirmarResetar() {
-      if (!podeEditar()) return;
+      if (!sessao || sessao.perfil !== 'gde') return;
       const uNome = nomeUnidadePorId(unidadeAtual);
       abrirModal(
         'Restaurar dados iniciais',
@@ -1420,7 +1321,7 @@
     }
 
     function executarReset() {
-      if (!podeEditar()) return;
+      if (!sessao || sessao.perfil !== 'gde') return;
       fecharModal();
       aplicarEstado(estadoInicialUnidade(unidadeAtual));
       save();
@@ -2026,7 +1927,7 @@
         const bannerSomenteLeitura = !editavel && sessao && sessao.perfil === 'unidade'
           ? `<div class="mb-4 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/90 dark:bg-amber-950/40 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                <p class="text-xs text-amber-900 dark:text-amber-200">
-                 <b>Modo somente leitura</b> · Você está consultando a lotação de outra unidade. Para editar, volte para <b>${esc(nomeUnidadePorId(sessao.unidadeOrigem))}</b>.
+                 <b>Modo consulta (somente leitura)</b> — visualizando lotação de <b>${esc(nomeUnidadePorId(unidadeAtual))}</b>. Alterações desabilitadas.
                </p>
                <button type="button" onclick="voltarParaMinhaUnidade()"
                  class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition self-start sm:self-auto">
