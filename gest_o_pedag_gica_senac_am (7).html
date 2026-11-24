@@ -1,0 +1,2183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Gestão Pedagógica · Senac AM</title>
+
+  <!-- Fonte Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN com suporte automático ao tema claro/escuro do sistema -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'media',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif']
+          },
+          colors: {
+            senac: {
+              50: '#eef6ff',
+              100: '#d9eaff',
+              500: '#1670cc',
+              600: '#0b5cad',
+              700: '#08488a'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Estilos dedicados: Logo Senac, Preloader, Coluna Fixa (.tn) e Semáforo (.sem) -->
+  <style>
+    /* Contraste automático da logo oficial do Senac (PNG original branco) */
+    .senac-logo {
+      filter: brightness(0);
+    }
+    @media (prefers-color-scheme: dark) {
+      .senac-logo {
+        filter: brightness(0) invert(1);
+      }
+    }
+
+    /* Overlay do Preloader institucional padrão GDE */
+    #preloader {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background-color: #ffffff;
+      color: #0f172a;
+      transition: opacity 0.4s ease;
+    }
+    @media (prefers-color-scheme: dark) {
+      #preloader {
+        background-color: #0f172a;
+        color: #f1f5f9;
+      }
+    }
+    #preloader.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    @keyframes preloadProgress {
+      0% { transform: scaleX(0); }
+      100% { transform: scaleX(1); }
+    }
+    .preload-fill {
+      transform-origin: left center;
+      animation: preloadProgress 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    /* Coluna fixa de turnos sempre à frente dos cards ao rolar horizontalmente */
+    .grade th.tn,
+    .grade td.tn {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      background-color: #f1f5f9;
+      border-right: 1px solid #cbd5e1;
+      box-shadow: 3px 0 8px rgba(15, 23, 42, 0.08);
+    }
+    @media (prefers-color-scheme: dark) {
+      .grade th.tn,
+      .grade td.tn {
+        background-color: #0f172a;
+        border-right-color: #334155;
+        box-shadow: 3px 0 10px rgba(0, 0, 0, 0.45);
+      }
+    }
+
+    /* Cards sempre abaixo da coluna fixa (.tn = z-index: 10) */
+    .ev {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Semáforo: bolinha limpa (sem cursor:help / sem "?") que expande em pílula na própria cor ao hover */
+    .sem {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      line-height: 14px;
+      text-align: center;
+      cursor: default;
+      transition: all 0.16s ease;
+    }
+    .sem::after {
+      content: attr(data-tip);
+      display: none;
+      padding: 0 6px;
+    }
+    .sem:hover {
+      width: auto;
+      min-width: 12px;
+      height: auto;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border-width: 0;
+      z-index: 3;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    }
+    .sem:hover::after {
+      display: inline;
+    }
+    .sem.verde { background-color: #12b76a; color: #ffffff; }
+    .sem.amarelo { background-color: #f5a524; color: #1d2330; }
+    .sem.vermelho { background-color: #d92d20; color: #ffffff; }
+    .sem.cinza { background-color: #667085; color: #ffffff; }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- ===================================================================== -->
+  <!-- TELA DE PRELOAD INSTITUCIONAL (PADRÃO GDE + SCRIPT ANTI-TRAVAMENTO)   -->
+  <!-- ===================================================================== -->
+  <div id="preloader" class="flex flex-col items-center justify-center p-6 cursor-pointer select-none" title="Clique para entrar agora">
+    <div class="flex flex-col items-center gap-4 max-w-xs w-full text-center">
+      <img
+        src="https://am.senac.br/wp-content/themes/senac/images/logo-senac.png"
+        alt="Senac AM"
+        class="senac-logo h-12 sm:h-14 w-auto object-contain"
+        onerror="this.style.display='none'; document.getElementById('preload-fallback').classList.remove('hidden');"
+      />
+      <div id="preload-fallback" class="hidden flex items-center gap-2 text-2xl font-extrabold tracking-tight text-senac-600 dark:text-sky-400">
+        <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="currentColor" fill-opacity="0.14"/>
+          <path d="M8 21c3.5-2 7-7 16-10-4.5 5-8 8.5-11 11-1.8 1.5-3.8 1-5-1Z" fill="currentColor"/>
+        </svg>
+        <span>Senac AM</span>
+      </div>
+
+      <div class="w-44 h-1 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden mt-1">
+        <div class="preload-fill h-full w-full bg-senac-600 dark:bg-sky-400 rounded-full"></div>
+      </div>
+
+      <div class="mt-2 space-y-0.5">
+        <div class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+          Powered by Glauco Soprano
+        </div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400">
+          Gerência de Desenvolvimento Educacional
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Script isolado anti-travamento: fecha automaticamente em 2.2s ou ao clicar -->
+  <script>
+    (function () {
+      var el = document.getElementById('preloader');
+      if (!el) return;
+      var fechado = false;
+      function fechar() {
+        if (fechado) return;
+        fechado = true;
+        el.classList.add('hide');
+        setTimeout(function () {
+          el.style.display = 'none';
+        }, 400);
+      }
+      el.addEventListener('click', fechar);
+      setTimeout(fechar, 2200);
+    })();
+  </script>
+
+  <!-- ===================================================================== -->
+  <!-- CABEÇALHO MULTI-UNIDADE E AÇÕES GLOBAIS                               -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <!-- Logo oficial + Título + Seletor de Unidade -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+          <div class="shrink-0 flex items-center">
+            <img
+              src="https://am.senac.br/wp-content/themes/senac/images/logo-senac.png"
+              alt="Senac AM"
+              class="senac-logo h-8 w-auto object-contain"
+              onerror="this.style.display='none'; document.getElementById('header-logo-fallback').classList.remove('hidden');"
+            />
+            <span id="header-logo-fallback" class="hidden px-2.5 py-1 rounded-lg bg-senac-600 text-white font-bold text-xs tracking-tight">
+              Senac
+            </span>
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">Gestão Pedagógica · Senac AM</h1>
+              <span id="sync-badge" class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">
+                <span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
+                Sincronizando...
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Mapa de sala, alocação de docentes e acompanhamento SIG × Real</p>
+          </div>
+        </div>
+
+        <!-- Seletor de Unidade Operativa -->
+        <div class="flex items-center gap-1.5 sm:ml-2">
+          <label for="unit-select" class="sr-only">Selecionar unidade</label>
+          <select id="unit-select" onchange="trocarUnidade(this.value)"
+            class="text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-senac-500 max-w-full sm:max-w-[290px]">
+          </select>
+          <button type="button" onclick="abrirModalUnidade()"
+            class="text-xs font-semibold px-2.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition whitespace-nowrap"
+            title="Cadastrar nova unidade operativa">
+            + Unidade
+          </button>
+        </div>
+      </div>
+
+      <!-- Ações de Persistência -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button type="button" onclick="exportarJSON()"
+          class="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
+          Exportar JSON
+        </button>
+        <label class="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition cursor-pointer">
+          Importar JSON
+          <input type="file" accept=".json,application/json" class="hidden" onchange="importarJSON(this.files[0]); this.value='';" />
+        </label>
+        <button type="button" onclick="confirmarResetar()"
+          class="text-xs font-medium px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 transition">
+          Restaurar dados iniciais
+        </button>
+      </div>
+    </div>
+
+    <!-- Navegação das 6 Abas -->
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6">
+      <nav id="nav" class="flex gap-1 overflow-x-auto -mb-px" aria-label="Abas principais"></nav>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- CONTEÚDO PRINCIPAL                                                    -->
+  <!-- ===================================================================== -->
+  <main id="app" class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-5"></main>
+
+  <!-- Rodapé -->
+  <footer class="max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-4 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between gap-2">
+    <span>Sincronização em tempo real via Firebase Firestore com backup automático local. Uso interno · GDE Senac AM.</span>
+    <span id="footer-date" class="tabular-nums"></span>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL GENÉRICO (CONFIRMAÇÕES E CADASTRO DE UNIDADE)                   -->
+  <!-- ===================================================================== -->
+  <div id="modal-backdrop" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl max-w-md w-full p-5">
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <h3 id="modal-title" class="text-base font-bold text-slate-900 dark:text-slate-100"></h3>
+        <button type="button" onclick="fecharModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg leading-none px-1">&times;</button>
+      </div>
+      <div id="modal-body" class="text-sm text-slate-600 dark:text-slate-300"></div>
+      <div id="modal-actions" class="mt-5 flex justify-end gap-2"></div>
+    </div>
+  </div>
+
+  <!-- Container de Toasts -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-[calc(100%-2rem)] pointer-events-none"></div>
+
+  <!-- SheetJS carregado com defer para nunca bloquear o carregamento da tela -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Firebase Compat SDK v10.12.2 -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <!-- ===================================================================== -->
+  <!-- LÓGICA PRINCIPAL DA APLICAÇÃO                                         -->
+  <!-- ===================================================================== -->
+  <script>
+    /* =========================================================================
+     * 1. CONFIGURAÇÃO DO FIREBASE FIRESTORE (PROJETO: gestao-pedagogica-senacam)
+     * ========================================================================= */
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCOXmgKGNZ5wlcQGaql8JAzLRt9vye6Ps0",
+      authDomain: "gestao-pedagogica-senacam.firebaseapp.com",
+      projectId: "gestao-pedagogica-senacam",
+      storageBucket: "gestao-pedagogica-senacam.firebasestorage.app",
+      messagingSenderId: "101585035448",
+      appId: "1:101585035448:web:6015a7c874ec9e4b7c544d"
+    };
+    const FIRESTORE_COLECAO = 'unidades_estado';
+
+    let db = null;
+    let unsubUnidade = null;
+    let unsubMeta = null;
+    let ultimoPayloadSalvo = '';
+
+    try {
+      if (typeof firebase !== 'undefined' && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId) {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(FIREBASE_CONFIG);
+        }
+        db = firebase.firestore();
+      }
+    } catch (err) {
+      console.error('Erro ao inicializar Firebase:', err);
+      db = null;
+    }
+
+    const FIREBASE_ATIVO = Boolean(db);
+
+    /* =========================================================================
+     * 2. CONSTANTES E DADOS INICIAIS POR UNIDADE
+     * ========================================================================= */
+    const STORAGE_UNITS_KEY = 'gp-senac-am-unidades-v3';
+    const STORAGE_PREFIX = 'gp-senac-am-estado-v3:';
+    const STORAGE_ACTIVE_UNIT = 'gp-senac-am-unidade-ativa-v3';
+
+    const UNIDADES_PADRAO = [
+      { id: 'CTH',    nome: 'CTH · Centro de Turismo e Hospitalidade' },
+      { id: 'CEI',    nome: 'CEI · Senac Chapada' },
+      { id: 'JT',     nome: 'JT · Senac Cidade Nova' },
+      { id: 'CEP PF', nome: 'CEP PF · Senac Centro' }
+    ];
+
+    const MOTIVOS = ['Não é desta unidade', 'Duplicada', 'Erro de cadastro', 'Outro'];
+    const CAMPOS_REL = [
+      ['nome', 'Nome'],
+      ['ch', 'CH'],
+      ['periodo', 'Período'],
+      ['ini', 'Início'],
+      ['fim', 'Fim'],
+      ['sig', 'Alunos SIG']
+    ];
+    const ROT = {
+      sala: 'Ambiente',
+      doc: 'Docente',
+      mod: 'Modalidade',
+      sig: 'Alunos SIG',
+      real: 'Alunos real',
+      nome: 'Nome',
+      ch: 'CH',
+      periodo: 'Período',
+      ini: 'Início',
+      fim: 'Fim',
+      dias: 'Dias',
+      oculta: 'Ocultação',
+      saiu: 'Relatório'
+    };
+
+    const TURNOS = ['Manhã', 'Tarde', 'Noite'];
+    const BLOCOS_TURNO = {
+      'Manhã': [0, 12],
+      'Tarde': [12, 18],
+      'Noite': [18, 24]
+    };
+    const MODS = ['PSG', 'Mista', 'Comercial'];
+    const TABS = {
+      mapa: 'Mapa de sala',
+      turmas: 'Turmas',
+      amb: 'Ambientes',
+      doc: 'Docentes',
+      rel: 'Relatórios',
+      hist: 'Histórico'
+    };
+
+    // 9 Ambientes iniciais do CTH
+    const CTH_AMB = [
+      { id: 's1',  nome: 'Sala 01',          tipo: 'Sala',        cap: 30, externa: false },
+      { id: 's2',  nome: 'Sala 02',          tipo: 'Sala',        cap: 30, externa: false },
+      { id: 's3',  nome: 'Sala 03',          tipo: 'Sala',        cap: 30, externa: false },
+      { id: 's4',  nome: 'Sala 04',          tipo: 'Sala',        cap: 30, externa: false },
+      { id: 'lc1', nome: 'Lab. Cozinha 01',  tipo: 'Laboratório', cap: 16, externa: false },
+      { id: 'lc2', nome: 'Lab. Cozinha 02',  tipo: 'Laboratório', cap: 16, externa: false },
+      { id: 'lcf', nome: 'Lab. Confeitaria', tipo: 'Laboratório', cap: 20, externa: false },
+      { id: 'lbr', nome: 'Lab. Bar/Rest.',   tipo: 'Laboratório', cap: 20, externa: false },
+      { id: 'aud', nome: 'Auditório',        tipo: 'Auditório',   cap: 80, externa: false }
+    ];
+
+    // 8 Turmas iniciais do CTH
+    const CTH_TURMAS = [
+      { id: '2026.4.82',  nome: 'Cozinheiro',                      seg: 'Gastronomia',           ch: 500,  periodo: '30/06/2026 a 07/01/2027', ini: '08:00', fim: '12:00', sig: 16, real: null, sala: 'lc1', doc: '', mod: '' },
+      { id: '2026.4.147', nome: 'Condutor Ambiental Local',        seg: 'Turismo',               ch: 160,  periodo: '13/10/2026 a 11/12/2026', ini: '08:00', fim: '12:00', sig: 19, real: 2,    sala: 's1',  doc: '', mod: '' },
+      { id: '2026.4.182', nome: 'Auxiliar de Confeitaria',         seg: 'Produção de Alimentos', ch: 200,  periodo: '26/10/2026 a 21/01/2027', ini: '08:00', fim: '12:00', sig: 20, real: null, sala: 'lcf', doc: '', mod: '' },
+      { id: '2026.4.183', nome: 'Auxiliar de Cozinha',             seg: 'Gastronomia',           ch: 240,  periodo: '26/10/2026 a 05/02/2027', ini: '08:00', fim: '12:00', sig: 15, real: null, sala: 'lc2', doc: '', mod: '' },
+      { id: '2026.4.155', nome: 'Garçom',                          seg: 'Gastronomia',           ch: 240,  periodo: '13/10/2026 a 16/12/2026', ini: '08:00', fim: '15:00', sig: 11, real: null, sala: 'lbr', doc: '', mod: '' },
+      { id: '2026.4.194', nome: 'Organizador de Eventos',          seg: 'Eventos',               ch: 180,  periodo: '26/10/2026 a 15/01/2027', ini: '13:00', fim: '17:00', sig: 15, real: null, sala: 's1',  doc: '', mod: '' },
+      { id: '2026.4.99',  nome: 'Técnico em Nutrição e Dietética', seg: 'Saúde',                 ch: 1200, periodo: '09/07/2026 a 18/11/2027', ini: '18:00', fim: '22:00', sig: 30, real: null, sala: 's1',  doc: '', mod: '' },
+      { id: '2026.4.184', nome: 'Café Regional',                   seg: 'Gastronomia',           ch: 40,   periodo: '26/10/2026 a 09/11/2026', ini: '13:00', fim: '17:00', sig: 19, real: null, sala: 'lc1', doc: '', mod: '' }
+    ];
+
+    function estadoInicialUnidade(unitId) {
+      if (String(unitId).toUpperCase() === 'CTH') {
+        return {
+          temSabado: false,
+          AMB: CTH_AMB.map(a => ({ ...a })),
+          turmas: CTH_TURMAS.map(t => ({ origem: 'relatorio', dias: 'sem', oculta: null, saiu: null, ...t })),
+          docentes: [],
+          historico: [],
+          importacoes: []
+        };
+      }
+      return {
+        temSabado: false,
+        AMB: [
+          { id: 's1',   nome: 'Sala 01',          tipo: 'Sala',        cap: 30, externa: false },
+          { id: 's2',   nome: 'Sala 02',          tipo: 'Sala',        cap: 30, externa: false },
+          { id: 'linf', nome: 'Lab. Informática', tipo: 'Laboratório', cap: 20, externa: false }
+        ],
+        turmas: [],
+        docentes: [],
+        historico: [],
+        importacoes: []
+      };
+    }
+
+    function normalizarEstado(d) {
+      const base = d && typeof d === 'object' ? d : {};
+      return {
+        temSabado: Boolean(base.temSabado),
+        AMB: Array.isArray(base.AMB)
+          ? base.AMB.map(a => ({
+              id: String(a.id || ('a' + Math.random().toString(36).slice(2, 8))),
+              nome: String(a.nome || 'Ambiente'),
+              tipo: String(a.tipo || 'Sala'),
+              cap: Number(a.cap) || 0,
+              externa: Boolean(a.externa)
+            }))
+          : [],
+        turmas: Array.isArray(base.turmas)
+          ? base.turmas.map(t => ({
+              origem: 'relatorio',
+              dias: 'sem',
+              oculta: null,
+              saiu: null,
+              seg: '—',
+              real: null,
+              sala: null,
+              doc: '',
+              mod: '',
+              ...t,
+              sig: Number(t.sig) || 0,
+              ch: Number(t.ch) || 0,
+              real: (t.real === '' || t.real === null || t.real === undefined) ? null : Number(t.real)
+            }))
+          : [],
+        docentes: Array.isArray(base.docentes) ? base.docentes.map(String) : [],
+        historico: Array.isArray(base.historico) ? [...base.historico] : [],
+        importacoes: Array.isArray(base.importacoes) ? [...base.importacoes] : []
+      };
+    }
+
+    /* =========================================================================
+     * 3. ESTADO EM MEMÓRIA
+     * ========================================================================= */
+    let unidades = [];
+    let unidadeAtual = 'CTH';
+    let temSabado = false;
+    let AMB = [];
+    let turmas = [];
+    let docentes = [];
+    let historico = [];
+    let importacoes = [];
+    let preview = null;
+    let aba = 'mapa';
+    let docEditIdx = null;
+
+    // Filtros independentes do Mapa de Sala e da aba Turmas
+    let mapaEscopo = 'unidade';  // 'unidade' | 'externa'
+    let mapaBusca = '';
+    let mapaFiltro = 'todas';    // 'todas' | 'conflito' | 'sem_docente' | 'encerrando'
+    let turmasBusca = '';
+    let turmasFiltro = 'todas';  // 'todas' | 'pendencia' | 'conflito' | 'sem_docente'
+
+    /* =========================================================================
+     * 4. UTILITÁRIOS PUROS E REGRAS DE NEGÓCIO
+     * ========================================================================= */
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[c]));
+
+    const norm = s => String(s ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+    const hm = s => {
+      if (!s || !String(s).includes(':')) return 0;
+      const [h, m] = String(s).split(':').map(Number);
+      return (h || 0) + (m || 0) / 60;
+    };
+
+    function hojeSemHora() {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+
+    const ehTurmaSabado = t => (t.dias === 'sab' || t.dias === 'sabado');
+
+    // Turno principal para KPIs e gráficos (sem duplicar turmas que cruzam turnos)
+    function turnoPrincipal(t) {
+      if (ehTurmaSabado(t)) return 'Sábado';
+      const h = hm(t.ini);
+      return h < 12 ? 'Manhã' : h < 18 ? 'Tarde' : 'Noite';
+    }
+
+    // Todos os turnos ocupados no Mapa de Sala (ex.: Garçom 08:00–15:00 -> Manhã e Tarde)
+    function turnosDaTurma(t) {
+      if (ehTurmaSabado(t)) return ['Sábado'];
+      const ini = hm(t.ini);
+      const fim = hm(t.fim);
+      if (fim <= ini) return [turnoPrincipal(t)];
+      const lista = TURNOS.filter(tn => {
+        const [bIni, bFim] = BLOCOS_TURNO[tn];
+        return ini < bFim && fim > bIni;
+      });
+      return lista.length ? lista : [turnoPrincipal(t)];
+    }
+
+    function turnosVisiveisMapa() {
+      const existeSab = ativas().some(ehTurmaSabado);
+      return (temSabado || existeSab) ? [...TURNOS, 'Sábado'] : TURNOS;
+    }
+
+    function toggleSabado(ativo) {
+      temSabado = Boolean(ativo);
+      save();
+      render();
+      toast(temSabado ? 'Turno Sábado ativado nesta unidade.' : 'Turno Sábado ocultado nesta unidade.', 'info');
+    }
+
+    const sobrepoe = (a, b) => hm(a.ini) < hm(b.fim) && hm(b.ini) < hm(a.fim);
+
+    const dataPt = s => {
+      const partes = String(s || '').trim().split('/').map(Number);
+      if (partes.length !== 3 || partes.some(isNaN)) return hojeSemHora();
+      return new Date(partes[2], partes[1] - 1, partes[0]);
+    };
+
+    const periodoDe = t => {
+      const partes = String(t.periodo || '').split(' a ');
+      if (partes.length < 2) {
+        const h = hojeSemHora();
+        return [h, h];
+      }
+      return [dataPt(partes[0]), dataPt(partes[1])];
+    };
+
+    const modLabel = t => t.mod || 'Não definida';
+    const ativas = () => turmas.filter(t => !t.oculta);
+    const ambNome = id => AMB.find(a => a.id === id)?.nome || '—';
+    const agoraIso = () => new Date().toISOString();
+    const agoraTxt = () => new Date().toLocaleString('pt-BR');
+    const hojeTxt = () => new Date().toLocaleDateString('pt-BR');
+    const fmtV = (campo, v) => {
+      if (campo === 'sala') return v ? ambNome(v) : '—';
+      if (campo === 'dias') return (v === 'sab' || v === 'sabado') ? 'Sábado' : 'Seg a Sex';
+      return (v === null || v === undefined || v === '') ? '—' : String(v);
+    };
+
+    function registrar(t, campo, de, para, origem) {
+      historico.unshift({
+        quando: agoraTxt(),
+        iso: agoraIso(),
+        turma: t.id,
+        nome: t.nome,
+        campo,
+        de,
+        para,
+        origem
+      });
+      if (historico.length > 500) historico.length = 500;
+    }
+
+    // Semáforo dinâmico baseado em new Date()
+    function semaforo(t) {
+      const hoje = hojeSemHora();
+      const [ini, fim] = periodoDe(t);
+      if (fim < hoje) return { cls: 'vermelho', txt: 'Encerrado', encerrando: false };
+      if (ini > hoje) return { cls: 'cinza', txt: 'Não iniciado', encerrando: false };
+      const dias = Math.round((fim - hoje) / 86400000);
+      if (dias <= 30) {
+        return { cls: 'amarelo', txt: `${dias} dia(s) para terminar`, encerrando: true };
+      }
+      return { cls: 'verde', txt: `${dias} dias para terminar`, encerrando: false };
+    }
+
+    // Conflito de horário: turmas de Sábado nunca conflitam com Seg a Sex
+    function conflitos(t) {
+      if (!t.sala && !t.doc) return [];
+      const sabT = ehTurmaSabado(t);
+      return ativas().filter(o => o !== t && ehTurmaSabado(o) === sabT && sobrepoe(t, o) && (
+        (t.sala && o.sala === t.sala) || (t.doc && o.doc === t.doc)
+      ));
+    }
+
+    function pendencias(t) {
+      const p = [];
+      if (!t.sala) p.push('a alocar (sem ambiente)');
+      if (!t.mod) p.push('modalidade não definida');
+      if (!t.doc) p.push('sem docente');
+      if (conflitos(t).length) p.push('conflito de horário');
+      const cap = AMB.find(a => a.id === t.sala)?.cap;
+      if (cap && t.sig > cap) p.push('acima da capacidade da sala');
+      if (t.saiu) p.push('saiu do relatório');
+      return p;
+    }
+
+    /* =========================================================================
+     * 5. PERSISTÊNCIA HÍBRIDA (FIREBASE FIRESTORE + FALLBACK LOCALSTORAGE)
+     * ========================================================================= */
+    function atualizarSeloSync(status) {
+      const el = document.getElementById('sync-badge');
+      if (!el) return;
+
+      if (!FIREBASE_ATIVO || status === 'offline') {
+        el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Modo local (offline)`;
+        el.className = 'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60';
+        return;
+      }
+      if (status === 'permission-denied') {
+        el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Erro de permissão (Regras)`;
+        el.className = 'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60';
+        return;
+      }
+      if (status === 'syncing') {
+        el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>Sincronizando...`;
+        el.className = 'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60';
+        return;
+      }
+      el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Firebase · Online`;
+      el.className = 'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60';
+    }
+
+    function tratarErroFirestore(err) {
+      console.error('Erro Firestore:', err);
+      const code = String(err?.code || '');
+      if (code === 'permission-denied') {
+        atualizarSeloSync('permission-denied');
+        toast('Firestore bloqueou o acesso (permission-denied). Ajuste as Regras no console do Firebase.', 'error');
+      } else {
+        atualizarSeloSync('offline');
+      }
+    }
+
+    function carregarListaUnidades() {
+      try {
+        const raw = localStorage.getItem(STORAGE_UNITS_KEY);
+        unidades = raw ? JSON.parse(raw) : UNIDADES_PADRAO.map(u => ({ ...u }));
+        if (!Array.isArray(unidades) || !unidades.length) {
+          unidades = UNIDADES_PADRAO.map(u => ({ ...u }));
+        }
+      } catch (e) {
+        unidades = UNIDADES_PADRAO.map(u => ({ ...u }));
+      }
+      try {
+        const savedActive = localStorage.getItem(STORAGE_ACTIVE_UNIT);
+        unidadeAtual = (savedActive && unidades.some(u => u.id === savedActive)) ? savedActive : unidades[0].id;
+      } catch (e) {
+        unidadeAtual = unidades[0].id;
+      }
+      renderSelectUnidades();
+
+      // Sincroniza a lista de unidades em unidades_estado/_meta
+      if (FIREBASE_ATIVO) {
+        if (typeof unsubMeta === 'function') {
+          unsubMeta();
+          unsubMeta = null;
+        }
+        unsubMeta = db.collection(FIRESTORE_COLECAO).doc('_meta').onSnapshot(
+          snap => {
+            if (snap.exists) {
+              const data = snap.data();
+              if (Array.isArray(data?.unidades) && data.unidades.length) {
+                unidades = data.unidades.map(u => ({ id: String(u.id), nome: String(u.nome) }));
+                try { localStorage.setItem(STORAGE_UNITS_KEY, JSON.stringify(unidades)); } catch (e) {}
+                if (!unidades.some(u => u.id === unidadeAtual)) {
+                  unidadeAtual = unidades[0].id;
+                }
+                renderSelectUnidades();
+              }
+            } else {
+              salvarListaUnidades();
+            }
+          },
+          err => tratarErroFirestore(err)
+        );
+      }
+    }
+
+    function salvarListaUnidades() {
+      try {
+        localStorage.setItem(STORAGE_UNITS_KEY, JSON.stringify(unidades));
+      } catch (e) {}
+
+      if (FIREBASE_ATIVO) {
+        db.collection(FIRESTORE_COLECAO).doc('_meta').set({
+          unidades: unidades.map(u => ({ id: u.id, nome: u.nome })),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(err => tratarErroFirestore(err));
+      }
+    }
+
+    function renderSelectUnidades() {
+      const sel = document.getElementById('unit-select');
+      if (!sel) return;
+      sel.innerHTML = unidades
+        .map(u => `<option value="${esc(u.id)}" ${u.id === unidadeAtual ? 'selected' : ''}>${esc(u.nome)}</option>`)
+        .join('');
+    }
+
+    function aplicarEstado(d) {
+      const n = normalizarEstado(d);
+      temSabado = n.temSabado;
+      AMB = n.AMB;
+      turmas = n.turmas;
+      docentes = n.docentes;
+      historico = n.historico;
+      importacoes = n.importacoes;
+    }
+
+    function snapshotEstado() {
+      return { temSabado, turmas, AMB, docentes, historico, importacoes };
+    }
+
+    function loadUnidade(unitId) {
+      if (typeof unsubUnidade === 'function') {
+        unsubUnidade();
+        unsubUnidade = null;
+      }
+
+      // Carrega primeiro do cache local para abertura instantânea
+      let localData = null;
+      try {
+        const raw = localStorage.getItem(STORAGE_PREFIX + unitId);
+        if (raw) localData = JSON.parse(raw);
+      } catch (e) {}
+
+      aplicarEstado(localData || estadoInicialUnidade(unitId));
+      ultimoPayloadSalvo = JSON.stringify(snapshotEstado());
+      preview = null;
+      docEditIdx = null;
+      render();
+
+      if (!FIREBASE_ATIVO) {
+        atualizarSeloSync('offline');
+        return;
+      }
+
+      atualizarSeloSync('syncing');
+      unsubUnidade = db.collection(FIRESTORE_COLECAO).doc(unitId).onSnapshot(
+        snap => {
+          if (snap.exists) {
+            const rawDoc = snap.data();
+            const normalizado = normalizarEstado(rawDoc);
+            const serializado = JSON.stringify(normalizado);
+            try { localStorage.setItem(STORAGE_PREFIX + unitId, serializado); } catch (e) {}
+            if (serializado !== ultimoPayloadSalvo) {
+              ultimoPayloadSalvo = serializado;
+              aplicarEstado(normalizado);
+              render();
+            }
+            atualizarSeloSync('online');
+          } else {
+            // Documento ainda não existe na nuvem: publica o estado inicial/local
+            const inicial = snapshotEstado();
+            ultimoPayloadSalvo = JSON.stringify(inicial);
+            db.collection(FIRESTORE_COLECAO).doc(unitId).set({
+              ...inicial,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true })
+              .then(() => atualizarSeloSync('online'))
+              .catch(err => tratarErroFirestore(err));
+          }
+        },
+        err => tratarErroFirestore(err)
+      );
+    }
+
+    function save() {
+      const estado = snapshotEstado();
+      const serializado = JSON.stringify(estado);
+      ultimoPayloadSalvo = serializado;
+
+      try {
+        localStorage.setItem(STORAGE_PREFIX + unidadeAtual, serializado);
+      } catch (e) {}
+
+      if (FIREBASE_ATIVO) {
+        atualizarSeloSync('syncing');
+        db.collection(FIRESTORE_COLECAO).doc(unidadeAtual).set({
+          ...estado,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true })
+          .then(() => atualizarSeloSync('online'))
+          .catch(err => tratarErroFirestore(err));
+      } else {
+        atualizarSeloSync('offline');
+      }
+    }
+
+    function trocarUnidade(unitId) {
+      if (!unitId || unitId === unidadeAtual) return;
+      unidadeAtual = unitId;
+      try { localStorage.setItem(STORAGE_ACTIVE_UNIT, unitId); } catch (e) {}
+      mapaBusca = '';
+      mapaFiltro = 'todas';
+      turmasBusca = '';
+      turmasFiltro = 'todas';
+      renderSelectUnidades();
+      loadUnidade(unitId);
+      const u = unidades.find(x => x.id === unitId);
+      toast(`Unidade alterada para ${u ? u.nome : unitId}.`, 'info');
+    }
+
+    /* =========================================================================
+     * 6. BACKUP JSON MULTI-UNIDADE (RETROCOMPATÍVEL COM BACKUP DE 1 UNIDADE)
+     * ========================================================================= */
+    function exportarJSON() {
+      const dadosUnidades = {};
+      unidades.forEach(u => {
+        if (u.id === unidadeAtual) {
+          dadosUnidades[u.id] = snapshotEstado();
+        } else {
+          try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + u.id);
+            dadosUnidades[u.id] = raw ? normalizarEstado(JSON.parse(raw)) : estadoInicialUnidade(u.id);
+          } catch (e) {
+            dadosUnidades[u.id] = estadoInicialUnidade(u.id);
+          }
+        }
+      });
+
+      const pacote = {
+        versao: 2,
+        exportadoEm: agoraIso(),
+        unidadeAtiva: unidadeAtual,
+        unidades: unidades.map(u => ({ id: u.id, nome: u.nome })),
+        dadosPorUnidade: dadosUnidades
+      };
+
+      const blob = new Blob([JSON.stringify(pacote, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `gestao-pedagogica-senac-am-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast(`Backup completo (${unidades.length} unidade(s)) exportado com sucesso.`, 'ok');
+    }
+
+    function importarJSON(file) {
+      if (!file) return;
+      const r = new FileReader();
+      r.onload = e => {
+        try {
+          const obj = JSON.parse(e.target.result);
+
+          // Formato v2 (multi-unidade)
+          if (obj && obj.dadosPorUnidade && typeof obj.dadosPorUnidade === 'object') {
+            const listaImp = Array.isArray(obj.unidades) && obj.unidades.length
+              ? obj.unidades.map(u => ({ id: String(u.id), nome: String(u.nome) }))
+              : Object.keys(obj.dadosPorUnidade).map(id => ({ id, nome: id }));
+
+            listaImp.forEach(u => {
+              if (!unidades.some(x => x.id === u.id)) {
+                unidades.push(u);
+              }
+            });
+            salvarListaUnidades();
+
+            Object.entries(obj.dadosPorUnidade).forEach(([id, st]) => {
+              const normSt = normalizarEstado(st);
+              try { localStorage.setItem(STORAGE_PREFIX + id, JSON.stringify(normSt)); } catch (err) {}
+              if (FIREBASE_ATIVO) {
+                db.collection(FIRESTORE_COLECAO).doc(id).set({
+                  ...normSt,
+                  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }).catch(err => tratarErroFirestore(err));
+              }
+            });
+
+            if (obj.unidadeAtiva && unidades.some(u => u.id === obj.unidadeAtiva)) {
+              unidadeAtual = obj.unidadeAtiva;
+              try { localStorage.setItem(STORAGE_ACTIVE_UNIT, unidadeAtual); } catch (err) {}
+            }
+            renderSelectUnidades();
+            loadUnidade(unidadeAtual);
+            toast(`Backup multi-unidade importado (${Object.keys(obj.dadosPorUnidade).length} unidade(s)).`, 'ok');
+            return;
+          }
+
+          // Formato legado (1 unidade: { turmas, AMB, docentes, historico, importacoes })
+          const dadosLegado = obj?.dados ? obj.dados : obj;
+          if (!dadosLegado || !Array.isArray(dadosLegado.turmas) || !Array.isArray(dadosLegado.AMB)) {
+            toast('Arquivo JSON inválido. Use um backup exportado por este sistema.', 'error');
+            return;
+          }
+          aplicarEstado(dadosLegado);
+          save();
+          render();
+          toast(`Backup importado para a unidade ${unidadeAtual} (retrocompatibilidade aplicada).`, 'ok');
+        } catch (err) {
+          console.error(err);
+          toast('Erro ao ler o arquivo JSON.', 'error');
+        }
+      };
+      r.readAsText(file);
+    }
+
+    /* =========================================================================
+     * 7. MODAL E TOASTS (SEM ALERT / CONFIRM)
+     * ========================================================================= */
+    function abrirModal(titulo, bodyHtml, actionsHtml) {
+      document.getElementById('modal-title').textContent = titulo;
+      document.getElementById('modal-body').innerHTML = bodyHtml;
+      document.getElementById('modal-actions').innerHTML = actionsHtml;
+      const bg = document.getElementById('modal-backdrop');
+      bg.classList.remove('hidden');
+      bg.classList.add('flex');
+    }
+
+    function fecharModal() {
+      const bg = document.getElementById('modal-backdrop');
+      bg.classList.add('hidden');
+      bg.classList.remove('flex');
+    }
+
+    function toast(msg, tipo = 'info') {
+      const cont = document.getElementById('toast-container');
+      if (!cont) return;
+      const cores = {
+        ok: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        warn: 'bg-amber-500 text-slate-950',
+        info: 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900'
+      };
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto text-xs font-medium px-3.5 py-2.5 rounded-xl shadow-lg transition-opacity duration-300 ${cores[tipo] || cores.info}`;
+      el.textContent = msg;
+      cont.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 3600);
+    }
+
+    function abrirModalUnidade() {
+      abrirModal(
+        'Nova unidade operativa',
+        `<div class="space-y-3">
+          <p class="text-xs text-slate-500 dark:text-slate-400">Cada unidade possui ambientes, docentes, turmas e histórico independentes.</p>
+          <div>
+            <label class="block text-xs font-semibold mb-1">Sigla / Código (ex.: CFP, Parintins)</label>
+            <input id="nova-u-id" type="text" placeholder="Ex.: CFP" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-senac-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">Nome de exibição</label>
+            <input id="nova-u-nome" type="text" placeholder="Ex.: CFP · Centro de Formação Profissional" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-senac-500" />
+          </div>
+        </div>`,
+        `<button type="button" onclick="fecharModal()" class="text-xs font-medium px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">Cancelar</button>
+         <button type="button" onclick="criarUnidade()" class="text-xs font-semibold px-3.5 py-2 rounded-lg bg-senac-600 hover:bg-senac-700 text-white">Criar unidade</button>`
+      );
+      setTimeout(() => document.getElementById('nova-u-id')?.focus(), 50);
+    }
+
+    function criarUnidade() {
+      const rawId = (document.getElementById('nova-u-id')?.value || '').trim();
+      const rawNome = (document.getElementById('nova-u-nome')?.value || '').trim();
+      const id = rawId.replace(/[\/#?]/g, '-');
+      if (!id) {
+        toast('Informe a sigla ou código da unidade.', 'warn');
+        return;
+      }
+      if (unidades.some(u => u.id.toLowerCase() === id.toLowerCase())) {
+        toast('Já existe uma unidade com essa sigla.', 'warn');
+        return;
+      }
+      const nome = rawNome || id;
+      unidades.push({ id, nome });
+      salvarListaUnidades();
+      fecharModal();
+      trocarUnidade(id);
+      toast(`Unidade "${nome}" criada.`, 'ok');
+    }
+
+    function confirmarResetar() {
+      const u = unidades.find(x => x.id === unidadeAtual);
+      abrirModal(
+        'Restaurar dados iniciais',
+        `<p>Deseja restaurar os dados iniciais da unidade <b>${esc(u ? u.nome : unidadeAtual)}</b>? As alterações atuais desta unidade serão substituídas.</p>`,
+        `<button type="button" onclick="fecharModal()" class="text-xs font-medium px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">Cancelar</button>
+         <button type="button" onclick="executarResetar()" class="text-xs font-semibold px-3.5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white">Sim, restaurar</button>`
+      );
+    }
+
+    function executarResetar() {
+      fecharModal();
+      aplicarEstado(estadoInicialUnidade(unidadeAtual));
+      save();
+      render();
+      toast('Dados iniciais restaurados.', 'ok');
+    }
+
+    /* =========================================================================
+     * 8. AÇÕES DE EDIÇÃO (TURMAS, AMBIENTES, DOCENTES)
+     * ========================================================================= */
+    function upd(id, campo, valor) {
+      const t = turmas.find(x => x.id === id);
+      if (!t) return;
+      let novo;
+      if (campo === 'sig') novo = Number(valor) || 0;
+      else if (campo === 'real') novo = valor === '' ? null : Number(valor);
+      else if (campo === 'sala') novo = valor || null;
+      else novo = valor;
+
+      if (novo === t[campo]) return;
+      registrar(t, campo, t[campo], novo, 'manual');
+      t[campo] = novo;
+      if (campo === 'dias' && novo === 'sab') temSabado = true;
+      save();
+      if (aba === 'turmas') atualizarTabelaTurmas();
+      else render();
+    }
+
+    function updAmb(id, campo, valor) {
+      const a = AMB.find(x => x.id === id);
+      if (!a) return;
+      if (campo === 'cap') a.cap = Number(valor) || 0;
+      else if (campo === 'externa') a.externa = (valor === true || valor === 'true');
+      else a[campo] = String(valor).trim() || a[campo];
+      save();
+      render();
+    }
+
+    function delAmb(id) {
+      if (turmas.some(t => t.sala === id)) return;
+      AMB = AMB.filter(a => a.id !== id);
+      save();
+      render();
+      toast('Ambiente excluído.', 'info');
+    }
+
+    function addAmb() {
+      const nome = (document.getElementById('an')?.value || '').trim();
+      if (!nome) {
+        toast('Informe o nome do ambiente.', 'warn');
+        return;
+      }
+      const externa = (document.getElementById('aext')?.value === 'true');
+      const tipo = document.getElementById('at')?.value || 'Sala';
+      const cap = Number(document.getElementById('ac')?.value) || 0;
+      AMB.push({ id: 'a' + Date.now(), nome, tipo, cap, externa });
+      save();
+      render();
+      toast(`Ambiente "${nome}" adicionado.`, 'ok');
+    }
+
+    function addDoc() {
+      const input = document.getElementById('dn');
+      const v = (input?.value || '').trim();
+      if (!v) return;
+      if (docentes.some(d => d.toLowerCase() === v.toLowerCase())) {
+        toast('Este docente já está cadastrado.', 'warn');
+        return;
+      }
+      docentes.push(v);
+      docentes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      save();
+      render();
+      toast(`Docente "${v}" cadastrado.`, 'ok');
+    }
+
+    function iniciarEdicaoDoc(idx) {
+      docEditIdx = idx;
+      render();
+      setTimeout(() => {
+        const inp = document.getElementById('doc-edit-input');
+        if (inp) {
+          inp.focus();
+          inp.select();
+        }
+      }, 20);
+    }
+
+    function cancelarEdicaoDoc() {
+      docEditIdx = null;
+      render();
+    }
+
+    function salvarEdicaoDoc(idx) {
+      const inp = document.getElementById('doc-edit-input');
+      const novo = (inp?.value || '').trim();
+      const antigo = docentes[idx];
+      if (!novo) {
+        toast('O nome do docente não pode ficar vazio.', 'warn');
+        return;
+      }
+      if (novo.toLowerCase() !== antigo.toLowerCase() && docentes.some((d, i) => i !== idx && d.toLowerCase() === novo.toLowerCase())) {
+        toast('Já existe outro docente com esse nome.', 'warn');
+        return;
+      }
+      docEditIdx = null;
+      if (novo === antigo) {
+        render();
+        return;
+      }
+      docentes[idx] = novo;
+      docentes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      let atualizadas = 0;
+      turmas.forEach(t => {
+        if (t.doc === antigo) {
+          registrar(t, 'doc', antigo, novo, 'manual');
+          t.doc = novo;
+          atualizadas++;
+        }
+      });
+      save();
+      render();
+      toast(`Docente renomeado${atualizadas ? ` (${atualizadas} turma(s) atualizada(s))` : ''}.`, 'ok');
+    }
+
+    function delDoc(i) {
+      const nome = docentes[i];
+      docentes.splice(i, 1);
+      docEditIdx = null;
+      save();
+      render();
+      toast(`Docente "${nome}" removido da lista.`, 'info');
+    }
+
+    function ocultar(id) {
+      const motivo = document.getElementById('mot-' + id)?.value || MOTIVOS[0];
+      const t = turmas.find(x => x.id === id);
+      if (!t) return;
+      t.oculta = motivo;
+      registrar(t, 'oculta', null, motivo, 'manual');
+      save();
+      render();
+      toast(`Turma ${t.id} ocultada (${motivo}).`, 'info');
+    }
+
+    function restaurar(id) {
+      const t = turmas.find(x => x.id === id);
+      if (!t) return;
+      registrar(t, 'oculta', t.oculta, null, 'manual');
+      t.oculta = null;
+      save();
+      render();
+      toast(`Turma ${t.id} restaurada.`, 'ok');
+    }
+
+    /* =========================================================================
+     * 9. IMPORTAÇÃO DE RELATÓRIO SIG (.XLSX)
+     * ========================================================================= */
+    function diasDesdeImport() {
+      if (!importacoes.length) return null;
+      return Math.floor((Date.now() - new Date(importacoes[0].iso)) / 86400000);
+    }
+
+    function montarPrevia(rows, arquivo) {
+      const hi = rows.findIndex(r => r && r[0] === 'Cód. da turma');
+      if (hi < 0) {
+        return { erro: 'Não encontrei a coluna "Cód. da turma". Confirme se o arquivo é o Relatório de Acompanhamento de Matrícula.' };
+      }
+      const lidas = [], erros = [];
+      let totalEP = 0;
+
+      rows.slice(hi + 1).forEach(r => {
+        if (!r || !r[0] || r[10] !== 'Em processo') return;
+        totalEP++;
+        const freqTxt = String(r[9] || '');
+        const hor = freqTxt.match(/(\d{1,2}:\d{2}).*?(\d{1,2}:\d{2})/);
+        if (!hor) {
+          erros.push(`${r[0]} · ${r[1]}: horário não reconhecido (${freqTxt || 'vazio'})`);
+          return;
+        }
+        const ehSab = /s[áa]b/i.test(freqTxt);
+        lidas.push({
+          id: String(r[0]).trim(),
+          nome: String(r[1] || '').trim(),
+          ch: Number(r[4]) || 0,
+          periodo: `${r[6]} a ${r[7]}`,
+          ini: hor[1].padStart(5, '0'),
+          fim: hor[2].padStart(5, '0'),
+          dias: ehSab ? 'sab' : 'sem',
+          sig: Number(r[14]) || 0
+        });
+      });
+
+      if (!lidas.length && !erros.length) {
+        return { erro: 'Nenhuma turma "Em processo" encontrada neste arquivo.' };
+      }
+
+      const idsRel = new Set(lidas.map(x => x.id));
+      const novas = [], alteradas = [], ocultas = [];
+      lidas.forEach(n => {
+        const t = turmas.find(x => x.id === n.id);
+        if (!t) { novas.push(n); return; }
+        if (t.oculta) { ocultas.push(n); return; }
+        const mud = CAMPOS_REL
+          .filter(([c]) => String(t[c]) !== String(n[c]))
+          .map(([c, l]) => ({ campo: l, chave: c, de: t[c], para: n[c] }));
+        if (mud.length || t.saiu) alteradas.push({ t, n, mud });
+      });
+      const saiu = turmas.filter(t => !t.oculta && !t.saiu && !idsRel.has(t.id));
+      return { arquivo, lidas: lidas.length, totalEP, novas, alteradas, ocultas, saiu, erros, dados: lidas };
+    }
+
+    function lerArquivo(file) {
+      if (!file) return;
+      if (typeof XLSX === 'undefined') {
+        toast('Biblioteca de leitura Excel ainda carregando. Tente novamente em 1 segundo.', 'warn');
+        return;
+      }
+      const r = new FileReader();
+      r.onload = e => {
+        try {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+          preview = montarPrevia(rows, file.name);
+        } catch (err) {
+          preview = { erro: 'Não foi possível ler este arquivo. Use o relatório em .xlsx.' };
+        }
+        render();
+      };
+      r.readAsArrayBuffer(file);
+    }
+
+    function confirmarImportacao() {
+      const p = preview;
+      if (!p || p.erro) return;
+      let detectouSab = false;
+
+      p.novas.forEach(n => {
+        if (n.dias === 'sab') detectouSab = true;
+        const t = { ...n, seg: '—', real: null, sala: null, doc: '', mod: '', origem: 'relatorio', oculta: null, saiu: null };
+        turmas.push(t);
+        registrar(t, 'Turma criada', null, 'importação', 'importação');
+      });
+      p.alteradas.forEach(({ t, n, mud }) => {
+        if (n.dias === 'sab') detectouSab = true;
+        mud.forEach(m => {
+          registrar(t, m.chave, m.de, m.para, 'importação');
+          t[m.chave] = n[m.chave];
+        });
+        if (t.saiu) {
+          registrar(t, 'saiu', t.saiu, null, 'importação');
+          t.saiu = null;
+        }
+      });
+      p.saiu.forEach(t => {
+        t.saiu = hojeTxt();
+        registrar(t, 'saiu', null, 'saiu do relatório', 'importação');
+      });
+
+      if (detectouSab) temSabado = true;
+
+      importacoes.unshift({
+        quando: agoraTxt(),
+        iso: agoraIso(),
+        arquivo: p.arquivo,
+        lidas: p.lidas,
+        novas: p.novas.length,
+        alteradas: p.alteradas.length,
+        saiu: p.saiu.length,
+        ocultas: p.ocultas.length,
+        erros: p.erros.length
+      });
+      preview = null;
+      save();
+      render();
+      toast('Importação confirmada e salva.', 'ok');
+    }
+
+    function cancelarImportacao() {
+      preview = null;
+      render();
+    }
+
+    function previewHtml(p) {
+      if (p.erro) {
+        return `<div class="bg-white dark:bg-slate-900 border-2 border-rose-500 rounded-xl p-4 mb-4">
+          <h2 class="text-sm font-bold text-rose-600 dark:text-rose-400">Não foi possível importar</h2>
+          <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">${esc(p.erro)}</p>
+          <div class="mt-3"><button type="button" onclick="cancelarImportacao()" class="text-xs px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">Fechar</button></div>
+        </div>`;
+      }
+      const tabela = (cab, linhas) => `
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead><tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500">${cab.map(c => `<th class="py-1.5 px-2 font-semibold">${c}</th>`).join('')}</tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">${linhas.length ? linhas.join('') : `<tr><td colspan="${cab.length}" class="py-2 px-2 text-slate-400">nenhuma</td></tr>`}</tbody>
+          </table>
+        </div>`;
+
+      const linhasAlt = [];
+      p.alteradas.forEach(({ t, mud }) => {
+        if (!mud.length) {
+          linhasAlt.push(`<tr><td class="py-1.5 px-2">${esc(t.nome)}<div class="text-[11px] text-slate-400">${t.id}</div></td><td colspan="3" class="py-1.5 px-2"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[11px]">voltou ao relatório</span></td></tr>`);
+        }
+        mud.forEach(m => {
+          linhasAlt.push(`<tr><td class="py-1.5 px-2">${esc(t.nome)}<div class="text-[11px] text-slate-400">${t.id}</div></td><td class="py-1.5 px-2">${m.campo}</td><td class="py-1.5 px-2">${esc(m.de)}</td><td class="py-1.5 px-2 font-semibold">${esc(m.para)}</td></tr>`);
+        });
+      });
+
+      return `<div class="bg-white dark:bg-slate-900 border-2 border-senac-600 rounded-xl p-4 mb-4 space-y-3">
+        <div>
+          <h2 class="text-sm font-bold">Prévia da importação · ${esc(p.arquivo)}</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">${p.totalEP} turmas "Em processo" no arquivo, ${p.lidas} lidas. Nada foi gravado ainda.</p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-2.5 text-xs text-slate-500">Novas<b class="block text-lg text-slate-900 dark:text-slate-100">${p.novas.length}</b></div>
+          <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-2.5 text-xs text-slate-500">Alteradas<b class="block text-lg text-slate-900 dark:text-slate-100">${p.alteradas.length}</b></div>
+          <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-2.5 text-xs text-slate-500">Saíram do relatório<b class="block text-lg text-slate-900 dark:text-slate-100">${p.saiu.length}</b></div>
+          <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-2.5 text-xs text-slate-500">Ocultas (ignoradas)<b class="block text-lg text-slate-900 dark:text-slate-100">${p.ocultas.length}</b></div>
+        </div>
+        <div>
+          <h3 class="text-xs font-bold mb-1">Novas turmas (entram como "a alocar")</h3>
+          ${tabela(['Código', 'Turma', 'Horário', 'Alunos SIG'], p.novas.map(n => `<tr><td class="py-1.5 px-2 text-slate-500">${n.id}</td><td class="py-1.5 px-2 font-medium">${esc(n.nome)}</td><td class="py-1.5 px-2">${n.ini}–${n.fim}${n.dias === 'sab' ? ' (Sáb)' : ''}</td><td class="py-1.5 px-2 text-right tabular-nums">${n.sig}</td></tr>`))}
+        </div>
+        <div>
+          <h3 class="text-xs font-bold mb-1">Alteradas pelo relatório</h3>
+          ${tabela(['Turma', 'Campo', 'De', 'Para'], linhasAlt)}
+        </div>
+        <div>
+          <h3 class="text-xs font-bold mb-1">Saíram do relatório (o pedagogo decide)</h3>
+          ${tabela(['Turma', 'Situação'], p.saiu.map(t => `<tr><td class="py-1.5 px-2">${esc(t.nome)} <span class="text-slate-400">(${t.id})</span></td><td class="py-1.5 px-2"><span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[11px]">não está mais "Em processo"</span></td></tr>`))}
+        </div>
+        ${p.erros.length ? `<div><h3 class="text-xs font-bold text-rose-600 mb-1">Linhas ignoradas</h3><ul class="list-disc pl-5 text-xs text-slate-500">${p.erros.map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="confirmarImportacao()" class="text-xs font-semibold px-4 py-2 rounded-lg bg-senac-600 hover:bg-senac-700 text-white">Confirmar importação</button>
+          <button type="button" onclick="cancelarImportacao()" class="text-xs font-medium px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700">Cancelar</button>
+        </div>
+      </div>`;
+    }
+
+    /* =========================================================================
+     * 10. GRÁFICOS SVG (RELATÓRIOS)
+     * ========================================================================= */
+    const COR_SIG = '#0b5cad';
+    const COR_REAL = '#12b76a';
+    const CORES_MOD = ['#0b5cad', '#12b76a', '#f5a524', '#94a3b8', '#8b5cf6', '#ec4899'];
+
+    function legendaChart(series) {
+      return `<div class="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 mb-2">${series.map(s => `<span class="inline-flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-xs inline-block" style="background:${s.cor}"></i>${s.nome}</span>`).join('')}</div>`;
+    }
+
+    function colChart(labels, series) {
+      const W = 640, H = 270, pl = 44, pr = 12, pt = 22, pb = 40;
+      const max = Math.max(1, ...series.flatMap(s => s.values.map(v => v || 0))) * 1.15;
+      const iw = W - pl - pr, ih = H - pt - pb;
+      const gw = iw / labels.length;
+      const bw = Math.min(42, gw * 0.30);
+      const n = series.length;
+      let svg = `<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto text-[11px] fill-slate-500 dark:fill-slate-400">`;
+      for (let k = 0; k <= 4; k++) {
+        const v = Math.round((max / 1.15) * k / 4);
+        const y = pt + ih - (v / max) * ih;
+        svg += `<line x1="${pl}" x2="${W - pr}" y1="${y}" y2="${y}" class="stroke-slate-200 dark:stroke-slate-800"/>`;
+        svg += `<text x="${pl - 6}" y="${y + 4}" text-anchor="end">${v}</text>`;
+      }
+      labels.forEach((lab, i) => {
+        const cx = pl + i * gw + gw / 2;
+        series.forEach((s, j) => {
+          const v = s.values[i];
+          const x = cx + (j - (n - 1) / 2) * (bw + 6) - bw / 2;
+          if (v == null) {
+            svg += `<text x="${x + bw / 2}" y="${pt + ih - 6}" text-anchor="middle" class="fill-slate-400">sem dado</text>`;
+            return;
+          }
+          const h = (v / max) * ih;
+          const y = pt + ih - h;
+          svg += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="4" fill="${s.cor}"/>`;
+          svg += `<text x="${x + bw / 2}" y="${y - 5}" text-anchor="middle" class="fill-slate-800 dark:fill-slate-100 font-semibold">${v}</text>`;
+        });
+        svg += `<text x="${cx}" y="${H - 16}" text-anchor="middle" class="fill-slate-700 dark:fill-slate-200 font-medium">${esc(lab)}</text>`;
+      });
+      svg += `<line x1="${pl}" x2="${W - pr}" y1="${pt + ih}" y2="${pt + ih}" class="stroke-slate-300 dark:stroke-slate-700"/></svg>`;
+      return legendaChart(series) + svg;
+    }
+
+    function donutChart(items) {
+      const total = items.reduce((s, i) => s + i.valor, 0);
+      const R = 70, C = 2 * Math.PI * R;
+      let off = 0;
+      let svg = '<svg viewBox="0 0 200 200" class="w-48 h-48 shrink-0">';
+      svg += `<circle cx="100" cy="100" r="${R}" fill="none" class="stroke-slate-200 dark:stroke-slate-800" stroke-width="28"/>`;
+      items.forEach(i => {
+        if (!i.valor) return;
+        const len = (i.valor / (total || 1)) * C;
+        svg += `<circle cx="100" cy="100" r="${R}" fill="none" stroke="${i.cor}" stroke-width="28" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 100 100)"/>`;
+        off += len;
+      });
+      svg += `<text x="100" y="98" text-anchor="middle" class="fill-slate-900 dark:fill-slate-100 text-[22px] font-bold">${total}</text>`;
+      svg += `<text x="100" y="118" text-anchor="middle" class="fill-slate-500 dark:fill-slate-400 text-[11px]">alunos SIG</text></svg>`;
+
+      const leg = items.map(i => `
+        <div class="flex items-center gap-2.5 my-2 text-sm">
+          <i class="w-3 h-3 rounded-xs inline-block shrink-0" style="background:${i.cor}"></i>
+          <span class="min-w-[120px] font-medium">${esc(i.nome)}</span>
+          <b class="tabular-nums">${i.valor}</b>
+          <span class="text-xs text-slate-500 dark:text-slate-400">alunos · ${i.turmas} turma(s)</span>
+        </div>`).join('');
+      return `<div class="flex items-center gap-8 flex-wrap">${svg}<div>${leg}</div></div>`;
+    }
+
+    /* =========================================================================
+     * 11. RENDERIZAÇÃO DAS 6 ABAS (COM BUSCA EM TEMPO REAL SEM PERDER FOCO)
+     * ========================================================================= */
+    function renderNav() {
+      const navEl = document.getElementById('nav');
+      if (!navEl) return;
+      navEl.innerHTML = Object.entries(TABS).map(([k, v]) => {
+        const ativo = k === aba;
+        return `<button type="button" onclick="mudarAba('${k}')"
+          class="px-3.5 py-2.5 text-sm whitespace-nowrap border-b-2 transition ${ativo
+            ? 'border-senac-600 text-senac-600 dark:border-sky-400 dark:text-sky-400 font-semibold'
+            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium'}">
+          ${v}
+        </button>`;
+      }).join('');
+    }
+
+    function mudarAba(nova) {
+      aba = nova;
+      docEditIdx = null;
+      render();
+    }
+
+    // ---- Helpers do Mapa de Sala ----
+    function filtrarTurmasMapa(lista, ambientesEscopo) {
+      const idsAmb = new Set(ambientesEscopo.map(a => a.id));
+      const q = norm(mapaBusca.trim());
+      return lista.filter(t => {
+        if (!t.sala || !idsAmb.has(t.sala)) return false;
+        if (mapaFiltro === 'conflito' && conflitos(t).length === 0) return false;
+        if (mapaFiltro === 'sem_docente' && Boolean(t.doc)) return false;
+        if (mapaFiltro === 'encerrando' && !semaforo(t).encerrando) return false;
+        if (q) {
+          const alvo = norm(`${t.id} ${t.nome} ${t.doc} ${ambNome(t.sala)} ${t.seg}`);
+          if (!alvo.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    function gerarConteudoMapa() {
+      const T = ativas();
+      const ambsEscopo = AMB.filter(a => mapaEscopo === 'externa' ? a.externa : !a.externa);
+      const filtradas = filtrarTurmasMapa(T, ambsEscopo);
+      const turnosLinhas = turnosVisiveisMapa();
+
+      // Quantitativo geral dinâmico das turmas visíveis no escopo/filtro atual
+      const somaSig = filtradas.reduce((s, t) => s + t.sig, 0);
+      const comReal = filtradas.filter(t => t.real != null);
+      const somaReal = comReal.reduce((s, t) => s + t.real, 0);
+      const realTxt = comReal.length ? somaReal : '—';
+
+      let gradeHtml = '';
+      if (!ambsEscopo.length) {
+        gradeHtml = `<div class="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+          Nenhum ambiente cadastrado em <b>${mapaEscopo === 'externa' ? 'Aulas externas' : 'Salas da unidade'}</b>.<br/>
+          Cadastre ou ajuste a localização na aba <b>Ambientes</b>.
+        </div>`;
+      } else {
+        gradeHtml = `<div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="grade w-full border-collapse min-w-[780px]">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+                <th class="tn w-24 py-2.5 px-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400">Turno</th>
+                ${ambsEscopo.map(a => `
+                  <th class="py-2.5 px-3 text-center align-bottom min-w-[190px]">
+                    <div class="text-xs font-bold text-slate-800 dark:text-slate-100">${esc(a.nome)}</div>
+                    <div class="text-[11px] font-normal text-slate-500 dark:text-slate-400">${esc(a.tipo)} · ${a.cap} lug.</div>
+                  </th>`).join('')}
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              ${turnosLinhas.map(tn => `
+                <tr>
+                  <td class="tn w-24 py-3 px-3 text-xs font-bold text-slate-700 dark:text-slate-200 align-top">${tn}</td>
+                  ${ambsEscopo.map(a => {
+                    const ts = filtradas
+                      .filter(t => t.sala === a.id && turnosDaTurma(t).includes(tn))
+                      .sort((x, y) => hm(x.ini) - hm(y.ini));
+                    return `<td class="p-2 align-top min-w-[190px] bg-white dark:bg-slate-900/30">
+                      ${ts.map(t => {
+                        const c = conflitos(t).length > 0;
+                        const s = semaforo(t);
+                        const ehCont = turnosDaTurma(t)[0] !== tn;
+                        const qReal = t.real != null ? t.real : '—';
+                        return `<div class="ev rounded-lg p-2.5 mb-2 last:mb-0 text-white shadow-xs transition ${c ? 'bg-rose-700 dark:bg-rose-800' : 'bg-senac-600 dark:bg-senac-700'}">
+                          <span class="sem ${s.cls}" data-tip="${esc(s.txt)}"></span>
+                          <div class="flex items-center justify-between gap-1 text-[11px] ${c ? 'text-rose-100' : 'text-sky-100'}">
+                            <span class="font-medium tabular-nums">${esc(t.id)}</span>
+                            ${ehCont ? '<span class="px-1.5 py-0.2 rounded bg-white/20 text-[10px] font-semibold">cont.</span>' : ''}
+                          </div>
+                          <div class="font-bold text-[13px] leading-snug line-clamp-2 mt-0.5">${esc(t.nome)}</div>
+                          <div class="text-[11px] mt-1 ${c ? 'text-rose-100' : 'text-sky-100'} tabular-nums" title="Alunos Real / Alunos SIG">
+                            ${esc(t.ini)}–${esc(t.fim)} · <b>${qReal}/${t.sig}</b> alunos
+                          </div>
+                          <div class="text-[11px] ${c ? 'text-rose-100/90' : 'text-sky-100/90'}">${esc(t.periodo)}</div>
+                          <div class="text-[11px] mt-0.5 pr-4 truncate ${c ? 'text-rose-100' : 'text-sky-100'}">${t.doc ? esc(t.doc) : 'sem docente'}</div>
+                        </div>`;
+                      }).join('')}
+                    </td>`;
+                  }).join('')}
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+      }
+
+      return `${gradeHtml}
+        <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs text-slate-600 dark:text-slate-400">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <span class="inline-flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-full bg-[#12b76a] inline-block"></i>mais de 30 dias</span>
+            <span class="inline-flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-full bg-[#f5a524] inline-block"></i>termina em até 30 dias</span>
+            <span class="inline-flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-full bg-[#d92d20] inline-block"></i>período encerrado</span>
+            <span class="inline-flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-full bg-[#667085] inline-block"></i>ainda não começou</span>
+            <span class="inline-flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-xs bg-rose-700 inline-block"></i>conflito de horário</span>
+          </div>
+          <div class="font-medium text-slate-800 dark:text-slate-200 tabular-nums">
+            Quantitativo geral (real/SIG): <b>${realTxt}/${somaSig}</b> alunos · <span class="text-slate-500 dark:text-slate-400 font-normal">(${comReal.length}/${filtradas.length} turmas com real informado)</span>
+          </div>
+        </div>`;
+    }
+
+    function atualizarConteudoMapa() {
+      const box = document.getElementById('mapa-conteudo');
+      if (box) box.innerHTML = gerarConteudoMapa();
+    }
+
+    function setMapaEscopo(escopo) {
+      mapaEscopo = escopo;
+      render();
+    }
+
+    function setMapaFiltro(f) {
+      mapaFiltro = f;
+      render();
+    }
+
+    // ---- Helpers da aba Turmas ----
+    function filtrarTurmasLista(T) {
+      const q = norm(turmasBusca.trim());
+      return T.filter(t => {
+        if (turmasFiltro === 'pendencia' && pendencias(t).length === 0) return false;
+        if (turmasFiltro === 'conflito' && conflitos(t).length === 0) return false;
+        if (turmasFiltro === 'sem_docente' && Boolean(t.doc)) return false;
+        if (q) {
+          const alvo = norm(`${t.id} ${t.nome} ${t.seg} ${t.doc} ${ambNome(t.sala)} ${t.mod}`);
+          if (!alvo.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    function gerarTabelaTurmas() {
+      const T = ativas();
+      const filtradas = filtrarTurmasLista(T);
+      const docsOrdenados = [...docentes].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+      const opSala = t => `<option value="">— a alocar —</option>` + AMB.map(a =>
+        `<option value="${a.id}" ${a.id === t.sala ? 'selected' : ''}>${esc(a.nome)}${a.externa ? ' (Externa)' : ''}</option>`
+      ).join('');
+
+      const opMod = t => {
+        const valorAtual = t.mod || '';
+        const ehAntiga = valorAtual && !MODS.includes(valorAtual);
+        let opts = `<option value="">— definir —</option>`;
+        if (ehAntiga) {
+          opts += `<option value="${esc(valorAtual)}" selected>${esc(valorAtual)} (antiga)</option>`;
+        }
+        opts += MODS.map(m => `<option value="${m}" ${m === valorAtual ? 'selected' : ''}>${m}</option>`).join('');
+        return opts;
+      };
+
+      const opDoc = t => {
+        const atual = t.doc || '';
+        const naoCadastrado = atual && !docsOrdenados.includes(atual);
+        if (!docsOrdenados.length && !atual) {
+          return `<option value="">— cadastre na aba Docentes —</option>`;
+        }
+        let opts = `<option value="">— selecionar docente —</option>`;
+        if (naoCadastrado) {
+          opts += `<option value="${esc(atual)}" selected>${esc(atual)} (não cadastrado)</option>`;
+        }
+        opts += docsOrdenados.map(d => `<option value="${esc(d)}" ${d === atual ? 'selected' : ''}>${esc(d)}</option>`).join('');
+        return opts;
+      };
+
+      const contador = `<div class="text-xs text-slate-500 dark:text-slate-400 mb-2">Exibindo <b>${filtradas.length}</b> de ${T.length} turma(s) ativa(s).</div>`;
+
+      if (!filtradas.length) {
+        return contador + `<div class="py-8 text-center text-sm text-slate-500 dark:text-slate-400">Nenhuma turma encontrada para o filtro atual.</div>`;
+      }
+
+      return contador + `<div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[980px] text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+              <th class="py-2 px-2 font-semibold">Turma</th>
+              <th class="py-2 px-2 font-semibold">Turno · horário</th>
+              <th class="py-2 px-2 font-semibold">Ambiente</th>
+              <th class="py-2 px-2 font-semibold">Modalidade</th>
+              <th class="py-2 px-2 font-semibold">Docente</th>
+              <th class="py-2 px-2 font-semibold text-right">SIG</th>
+              <th class="py-2 px-2 font-semibold">Real</th>
+              <th class="py-2 px-2 font-semibold">Situação</th>
+              <th class="py-2 px-2 font-semibold" title="Oculta turmas duplicadas, com erro ou de outra unidade sem apagar o histórico e impedindo que voltem na próxima importação.">
+                Ação <span class="text-slate-400 cursor-help">(?)</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            ${filtradas.map(t => {
+              const pend = pendencias(t);
+              const selDias = temSabado ? `<select onchange="upd('${t.id}','dias',this.value)" class="mt-1 text-[11px] rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-1.5 py-0.5">
+                <option value="sem" ${!ehTurmaSabado(t) ? 'selected' : ''}>Seg a Sex</option>
+                <option value="sab" ${ehTurmaSabado(t) ? 'selected' : ''}>Sábado</option>
+              </select>` : '';
+              return `<tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
+                <td class="py-2.5 px-2 align-top">
+                  <div class="font-semibold text-slate-900 dark:text-slate-100">${esc(t.nome)}</div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400">${esc(t.id)} · ${esc(t.seg)} · CH ${t.ch}h</div>
+                </td>
+                <td class="py-2.5 px-2 align-top whitespace-nowrap">
+                  <div class="font-medium">${turnoPrincipal(t)}</div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400">${esc(t.ini)}–${esc(t.fim)}</div>
+                  <div class="text-[11px] text-slate-400">${esc(t.periodo)}</div>
+                  ${selDias}
+                </td>
+                <td class="py-2.5 px-2 align-top">
+                  <select onchange="upd('${t.id}','sala',this.value)" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1.5 max-w-[165px]">
+                    ${opSala(t)}
+                  </select>
+                </td>
+                <td class="py-2.5 px-2 align-top">
+                  <select onchange="upd('${t.id}','mod',this.value)" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1.5">
+                    ${opMod(t)}
+                  </select>
+                </td>
+                <td class="py-2.5 px-2 align-top">
+                  <select onchange="upd('${t.id}','doc',this.value)" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1.5 max-w-[180px]" title="Cadastre os docentes na aba Docentes">
+                    ${opDoc(t)}
+                  </select>
+                </td>
+                <td class="py-2.5 px-2 align-top text-right font-semibold tabular-nums">${t.sig}</td>
+                <td class="py-2.5 px-2 align-top">
+                  <input type="number" min="0" value="${t.real ?? ''}" placeholder="—" onchange="upd('${t.id}','real',this.value)"
+                    class="w-16 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-right tabular-nums" />
+                </td>
+                <td class="py-2.5 px-2 align-top">
+                  <div class="flex flex-wrap gap-1 max-w-[190px]">
+                    ${pend.length
+                      ? pend.map(p => `<span class="px-2 py-0.5 rounded-full text-[11px] font-medium ${/conflito|capacidade|a alocar/.test(p) ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'}">${p}</span>`).join('')
+                      : '<span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">OK</span>'}
+                  </div>
+                </td>
+                <td class="py-2.5 px-2 align-top whitespace-nowrap">
+                  <div class="flex items-center gap-1">
+                    <select id="mot-${t.id}" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-1.5 py-1 text-[11px]">
+                      ${MOTIVOS.map(m => `<option>${m}</option>`).join('')}
+                    </select>
+                    <button type="button" onclick="ocultar('${t.id}')" title="Oculta esta turma do mapa e relatórios sem apagar o histórico."
+                      class="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-medium">
+                      Ocultar
+                    </button>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+    }
+
+    function atualizarTabelaTurmas() {
+      const wrap = document.getElementById('turmas-lista-wrap');
+      if (wrap) wrap.innerHTML = gerarTabelaTurmas();
+    }
+
+    function setTurmasFiltro(f) {
+      turmasFiltro = f;
+      render();
+    }
+
+    // ---- Views das 6 Abas ----
+    const VIEWS = {
+      mapa() {
+        const T = ativas();
+        const ambsUnid = AMB.filter(a => !a.externa);
+        const ambsExt = AMB.filter(a => a.externa);
+        const idsUnid = new Set(ambsUnid.map(a => a.id));
+        const idsExt = new Set(ambsExt.map(a => a.id));
+        const turmasUnid = T.filter(t => t.sala && idsUnid.has(t.sala)).length;
+        const turmasExt = T.filter(t => t.sala && idsExt.has(t.sala)).length;
+
+        const chips = [
+          ['todas', 'Todas'],
+          ['conflito', 'Com conflito'],
+          ['sem_docente', 'Sem docente'],
+          ['encerrando', 'Encerrando em ≤30d']
+        ];
+
+        return `
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+            <!-- Sub-abas: Salas da unidade vs. Aulas externas -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
+              <div class="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 self-start">
+                <button type="button" onclick="setMapaEscopo('unidade')"
+                  class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${mapaEscopo === 'unidade' ? 'bg-white dark:bg-slate-900 text-senac-600 dark:text-sky-400 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}">
+                  Salas da unidade <span class="ml-1 opacity-75 font-normal">(${ambsUnid.length} amb. · ${turmasUnid} t.)</span>
+                </button>
+                <button type="button" onclick="setMapaEscopo('externa')"
+                  class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${mapaEscopo === 'externa' ? 'bg-white dark:bg-slate-900 text-senac-600 dark:text-sky-400 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}">
+                  Aulas externas <span class="ml-1 opacity-75 font-normal">(${ambsExt.length} amb. · ${turmasExt} t.)</span>
+                </button>
+              </div>
+
+              <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+                <input type="checkbox" ${temSabado ? 'checked' : ''} onchange="toggleSabado(this.checked)"
+                  class="rounded border-slate-300 dark:border-slate-600 text-senac-600 focus:ring-senac-500" />
+                Incluir turno Sábado
+              </label>
+            </div>
+
+            <!-- Barra de pesquisa + Chips rápidos -->
+            <div class="flex flex-col md:flex-row md:items-center gap-2.5 mb-4">
+              <div class="relative flex-1 max-w-md">
+                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+                <input id="mapa-busca-input" type="search" value="${esc(mapaBusca)}"
+                  oninput="mapaBusca=this.value; atualizarConteudoMapa();"
+                  placeholder="Pesquisar turma, código, docente ou ambiente..."
+                  class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-senac-500" />
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                ${chips.map(([k, lbl]) => `
+                  <button type="button" onclick="setMapaFiltro('${k}')"
+                    class="px-3 py-1.5 rounded-full text-xs font-medium border transition ${mapaFiltro === k
+                      ? 'bg-senac-600 border-senac-600 text-white'
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}">
+                    ${lbl}
+                  </button>`).join('')}
+              </div>
+            </div>
+
+            <!-- Grade dinâmica -->
+            <div id="mapa-conteudo">${gerarConteudoMapa()}</div>
+          </div>`;
+      },
+
+      turmas() {
+        const dias = diasDesdeImport();
+        const alerta = dias === null
+          ? '<span class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">Nenhuma importação ainda</span>'
+          : dias > 7
+            ? `<span class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">Última importação há ${dias} dias</span>`
+            : `<span class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Última importação: ${importacoes[0].quando}</span>`;
+
+        const chips = [
+          ['todas', 'Todas'],
+          ['pendencia', 'Com pendência'],
+          ['conflito', 'Com conflito'],
+          ['sem_docente', 'Sem docente']
+        ];
+
+        const ocultas = turmas.filter(t => t.oculta);
+
+        return `
+          <!-- Card de importação -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 mb-4 shadow-xs">
+            <h2 class="text-sm font-bold">Importar relatório do sistema (SIG)</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Envie o Relatório de Acompanhamento de Matrícula (.xlsx). O sistema lê só turmas "Em processo", mostra uma prévia antes de gravar e preserva ambiente, docente, modalidade e alunos real preenchidos pelo pedagogo.
+            </p>
+            <div class="flex flex-wrap items-center gap-3 mt-3">
+              <input type="file" accept=".xlsx" onchange="lerArquivo(this.files[0]); this.value='';"
+                class="text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-senac-600 file:text-white hover:file:bg-senac-700 cursor-pointer" />
+              ${alerta}
+            </div>
+          </div>
+
+          ${preview ? previewHtml(preview) : ''}
+
+          <!-- Card principal de Turmas -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 mb-4 shadow-xs">
+            <div class="flex flex-col md:flex-row md:items-center gap-2.5 mb-3">
+              <div class="relative flex-1 max-w-md">
+                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+                <input id="turmas-busca-input" type="search" value="${esc(turmasBusca)}"
+                  oninput="turmasBusca=this.value; atualizarTabelaTurmas();"
+                  placeholder="Pesquisar turma, código, segmento, docente, ambiente ou modalidade..."
+                  class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-senac-500" />
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                ${chips.map(([k, lbl]) => `
+                  <button type="button" onclick="setTurmasFiltro('${k}')"
+                    class="px-3 py-1.5 rounded-full text-xs font-medium border transition ${turmasFiltro === k
+                      ? 'bg-senac-600 border-senac-600 text-white'
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}">
+                    ${lbl}
+                  </button>`).join('')}
+              </div>
+            </div>
+
+            <div id="turmas-lista-wrap">${gerarTabelaTurmas()}</div>
+          </div>
+
+          ${ocultas.length ? `
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+            <h2 class="text-sm font-bold">Turmas ocultas (${ocultas.length})</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Não aparecem no mapa nem nos relatórios e não são reimportadas.</p>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead><tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500"><th class="py-1.5 px-2">Turma</th><th class="py-1.5 px-2">Motivo</th><th class="py-1.5 px-2 text-right"></th></tr></thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                  ${ocultas.map(t => `<tr>
+                    <td class="py-2 px-2 font-medium">${esc(t.nome)} <span class="text-slate-400">(${esc(t.id)})</span></td>
+                    <td class="py-2 px-2">${esc(t.oculta)}</td>
+                    <td class="py-2 px-2 text-right"><button type="button" onclick="restaurar('${t.id}')" class="px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">Restaurar</button></td>
+                  </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>` : ''}`;
+      },
+
+      amb() {
+        return `
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+            <h2 class="text-sm font-bold">Ambientes pedagógicos</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 mb-4">
+              Edite nome, localização (Na unidade ou Externa), tipo e capacidade direto na tabela. Só é possível excluir ambiente sem turmas alocadas.
+            </p>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[680px] text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                    <th class="py-2 px-2 font-semibold">Nome</th>
+                    <th class="py-2 px-2 font-semibold">Localização</th>
+                    <th class="py-2 px-2 font-semibold">Tipo</th>
+                    <th class="py-2 px-2 font-semibold">Capacidade</th>
+                    <th class="py-2 px-2 font-semibold text-right">Turmas</th>
+                    <th class="py-2 px-2 font-semibold text-right"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                  ${AMB.map(a => {
+                    const n = ativas().filter(t => t.sala === a.id).length;
+                    return `<tr>
+                      <td class="py-2 px-2">
+                        <input type="text" value="${esc(a.nome)}" onchange="updAmb('${a.id}','nome',this.value)"
+                          class="w-full min-w-[160px] rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <select onchange="updAmb('${a.id}','externa',this.value)"
+                          class="rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1.5">
+                          <option value="false" ${!a.externa ? 'selected' : ''}>Na unidade</option>
+                          <option value="true" ${a.externa ? 'selected' : ''}>Externa</option>
+                        </select>
+                      </td>
+                      <td class="py-2 px-2">
+                        <select onchange="updAmb('${a.id}','tipo',this.value)"
+                          class="rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1.5">
+                          ${['Sala', 'Laboratório', 'Auditório', 'Outro'].map(tp => `<option ${tp === a.tipo ? 'selected' : ''}>${tp}</option>`).join('')}
+                        </select>
+                      </td>
+                      <td class="py-2 px-2">
+                        <input type="number" min="0" value="${a.cap}" onchange="updAmb('${a.id}','cap',this.value)"
+                          class="w-20 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1.5 text-right tabular-nums" />
+                      </td>
+                      <td class="py-2 px-2 text-right font-semibold tabular-nums">${n}</td>
+                      <td class="py-2 px-2 text-right">
+                        <button type="button" ${n ? 'disabled title="Mova as turmas antes de excluir"' : ''} onclick="delAmb('${a.id}')"
+                          class="px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 disabled:opacity-40 disabled:cursor-not-allowed">
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-2">
+              <input id="an" type="text" placeholder="Nome (ex.: Sala 05 ou Escola Parceira)"
+                class="flex-1 min-w-[200px] rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs" />
+              <select id="aext" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs">
+                <option value="false">Na unidade</option>
+                <option value="true">Externa</option>
+              </select>
+              <select id="at" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs">
+                <option>Sala</option><option>Laboratório</option><option>Auditório</option><option>Outro</option>
+              </select>
+              <input id="ac" type="number" min="0" placeholder="Capacidade"
+                class="w-28 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-2 text-xs" />
+              <button type="button" onclick="addAmb()" class="px-4 py-2 rounded-lg bg-senac-600 hover:bg-senac-700 text-white text-xs font-semibold">
+                Adicionar ambiente
+              </button>
+            </div>
+          </div>`;
+      },
+
+      doc() {
+        return `
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+            <h2 class="text-sm font-bold">Docentes cadastrados</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 mb-4">
+              Os nomes cadastrados aqui alimentam a lista fechada na aba Turmas. Se o mesmo docente for alocado em horários sobrepostos, o sistema aponta conflito.
+            </p>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[540px] text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                    <th class="py-2 px-2 font-semibold">Docente</th>
+                    <th class="py-2 px-2 font-semibold">Turmas vinculadas</th>
+                    <th class="py-2 px-2 font-semibold text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                  ${!docentes.length
+                    ? '<tr><td colspan="3" class="py-6 px-2 text-center text-slate-400">Nenhum docente cadastrado ainda.</td></tr>'
+                    : docentes.map((d, i) => {
+                        const vinculadas = ativas().filter(t => t.doc === d).map(t => esc(t.nome)).join(', ') || '—';
+                        if (docEditIdx === i) {
+                          return `<tr class="bg-sky-50/50 dark:bg-sky-950/20">
+                            <td class="py-2 px-2">
+                              <input id="doc-edit-input" type="text" value="${esc(d)}"
+                                onkeydown="if(event.key==='Enter') salvarEdicaoDoc(${i}); if(event.key==='Escape') cancelarEdicaoDoc();"
+                                class="w-full max-w-xs rounded-lg border border-senac-500 bg-white dark:bg-slate-800 px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-senac-500" />
+                            </td>
+                            <td class="py-2 px-2 text-slate-500">${vinculadas}</td>
+                            <td class="py-2 px-2 text-right whitespace-nowrap space-x-1">
+                              <button type="button" onclick="salvarEdicaoDoc(${i})" class="px-2.5 py-1.5 rounded-lg bg-senac-600 hover:bg-senac-700 text-white font-semibold">Salvar</button>
+                              <button type="button" onclick="cancelarEdicaoDoc()" class="px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">Cancelar</button>
+                            </td>
+                          </tr>`;
+                        }
+                        return `<tr>
+                          <td class="py-2.5 px-2 font-medium text-slate-900 dark:text-slate-100">${esc(d)}</td>
+                          <td class="py-2.5 px-2 text-slate-600 dark:text-slate-400">${vinculadas}</td>
+                          <td class="py-2.5 px-2 text-right whitespace-nowrap space-x-1">
+                            <button type="button" onclick="iniciarEdicaoDoc(${i})" title="Editar nome do docente"
+                              class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium">
+                              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
+                              </svg>
+                              Editar
+                            </button>
+                            <button type="button" onclick="delDoc(${i})"
+                              class="px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600">
+                              Remover
+                            </button>
+                          </td>
+                        </tr>`;
+                      }).join('')}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-2">
+              <input id="dn" type="text" placeholder="Nome completo do docente"
+                onkeydown="if(event.key==='Enter') addDoc();"
+                class="flex-1 min-w-[220px] max-w-md rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs" />
+              <button type="button" onclick="addDoc()" class="px-4 py-2 rounded-lg bg-senac-600 hover:bg-senac-700 text-white text-xs font-semibold">
+                Adicionar docente
+              </button>
+            </div>
+          </div>`;
+      },
+
+      rel() {
+        const T = ativas();
+        const somaSig = ts => ts.reduce((s, t) => s + t.sig, 0);
+        const comReal = ts => ts.filter(t => t.real != null);
+        const somaReal = ts => comReal(ts).reduce((s, t) => s + t.real, 0);
+        const ch = T.reduce((s, t) => s + t.ch, 0);
+        const turnosRel = turnosVisiveisMapa();
+
+        // Modalidades: PSG, Mista, Comercial, Não definida + eventuais antigas
+        const extras = [...new Set(T.map(modLabel).filter(m => !MODS.includes(m) && m !== 'Não definida'))];
+        const listaMods = [...MODS, ...extras, 'Não definida'];
+
+        return `
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <div class="text-xs text-slate-500 dark:text-slate-400">Turmas ativas</div>
+              <div class="text-2xl font-bold mt-1 tabular-nums">${T.length}</div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <div class="text-xs text-slate-500 dark:text-slate-400">Alunos SIG</div>
+              <div class="text-2xl font-bold mt-1 tabular-nums">${somaSig(T)}</div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <div class="text-xs text-slate-500 dark:text-slate-400">Alunos real informados</div>
+              <div class="text-2xl font-bold mt-1 tabular-nums">${somaReal(T)} <span class="text-xs font-normal text-slate-500">(${comReal(T).length}/${T.length} turmas)</span></div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <div class="text-xs text-slate-500 dark:text-slate-400">Carga horária total</div>
+              <div class="text-2xl font-bold mt-1 tabular-nums">${ch.toLocaleString('pt-BR')}h</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <h2 class="text-sm font-bold">Alunos por turno: SIG × Real</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Real soma apenas as turmas com dado informado.</p>
+              ${colChart(turnosRel, [
+                { nome: 'SIG', cor: COR_SIG, values: turnosRel.map(tn => somaSig(T.filter(t => turnoPrincipal(t) === tn))) },
+                { nome: 'Real', cor: COR_REAL, values: turnosRel.map(tn => { const ts = T.filter(t => turnoPrincipal(t) === tn); return comReal(ts).length ? somaReal(ts) : null; }) }
+              ])}
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <h2 class="text-sm font-bold">Unidade por modalidade</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Alunos previstos no SIG por modalidade cadastrada.</p>
+              ${donutChart(listaMods.map((m, i) => ({
+                nome: m,
+                valor: somaSig(T.filter(t => modLabel(t) === m)),
+                turmas: T.filter(t => modLabel(t) === m).length,
+                cor: CORES_MOD[i % CORES_MOD.length]
+              })))}
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+            <h2 class="text-sm font-bold">Alunos por turma: SIG × Real</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Presença = Real ÷ SIG. Turmas sem real informado aparecem como pendentes.</p>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[640px] text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                    <th class="py-2 px-2 font-semibold">Código</th>
+                    <th class="py-2 px-2 font-semibold">Curso</th>
+                    <th class="py-2 px-2 font-semibold">Turno</th>
+                    <th class="py-2 px-2 font-semibold text-right">SIG</th>
+                    <th class="py-2 px-2 font-semibold text-right">Real</th>
+                    <th class="py-2 px-2 font-semibold text-right">Diferença</th>
+                    <th class="py-2 px-2 font-semibold">Presença</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                  ${T.map(t => {
+                    if (t.real == null) {
+                      return `<tr>
+                        <td class="py-2 px-2 text-slate-500 tabular-nums">${esc(t.id)}</td>
+                        <td class="py-2 px-2 font-medium">${esc(t.nome)}</td>
+                        <td class="py-2 px-2">${turnoPrincipal(t)}</td>
+                        <td class="py-2 px-2 text-right tabular-nums">${t.sig}</td>
+                        <td class="py-2 px-2 text-right"><span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[11px]">pendente</span></td>
+                        <td class="py-2 px-2 text-right text-slate-400">—</td>
+                        <td class="py-2 px-2 text-slate-400">real não informado</td>
+                      </tr>`;
+                    }
+                    const p = Math.round((t.real / (t.sig || 1)) * 100);
+                    const d = t.real - t.sig;
+                    return `<tr>
+                      <td class="py-2 px-2 text-slate-500 tabular-nums">${esc(t.id)}</td>
+                      <td class="py-2 px-2 font-medium">${esc(t.nome)}</td>
+                      <td class="py-2 px-2">${turnoPrincipal(t)}</td>
+                      <td class="py-2 px-2 text-right tabular-nums">${t.sig}</td>
+                      <td class="py-2 px-2 text-right font-semibold tabular-nums">${t.real}</td>
+                      <td class="py-2 px-2 text-right tabular-nums ${d < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">${d > 0 ? '+' : ''}${d}</td>
+                      <td class="py-2 px-2">
+                        <div class="flex items-center gap-2">
+                          <div class="w-28 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden"><div class="h-full bg-emerald-500 rounded-full" style="width:${Math.min(p, 100)}%"></div></div>
+                          <span class="tabular-nums font-medium">${p}%</span>
+                        </div>
+                      </td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>`;
+      },
+
+      hist() {
+        return `
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 mb-4 shadow-xs">
+            <h2 class="text-sm font-bold">Importações realizadas</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Cada importação registra o arquivo, o que entrou e o que mudou.</p>
+            ${importacoes.length
+              ? `<div class="overflow-x-auto"><table class="w-full text-left border-collapse min-w-[600px] text-xs">
+                  <thead><tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500"><th class="py-2 px-2">Quando</th><th class="py-2 px-2">Arquivo</th><th class="py-2 px-2 text-right">Lidas</th><th class="py-2 px-2 text-right">Novas</th><th class="py-2 px-2 text-right">Alteradas</th><th class="py-2 px-2 text-right">Saíram</th><th class="py-2 px-2 text-right">Ocultas</th></tr></thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800">${importacoes.map(i => `<tr>
+                    <td class="py-2 px-2 whitespace-nowrap tabular-nums">${esc(i.quando)}</td>
+                    <td class="py-2 px-2 font-medium">${esc(i.arquivo)}</td>
+                    <td class="py-2 px-2 text-right tabular-nums">${i.lidas}</td>
+                    <td class="py-2 px-2 text-right tabular-nums">${i.novas}</td>
+                    <td class="py-2 px-2 text-right tabular-nums">${i.alteradas}</td>
+                    <td class="py-2 px-2 text-right tabular-nums">${i.saiu}</td>
+                    <td class="py-2 px-2 text-right tabular-nums">${i.ocultas}</td>
+                  </tr>`).join('')}</tbody>
+                </table></div>`
+              : '<p class="text-xs text-slate-400">Nenhuma importação registrada ainda.</p>'}
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+            <h2 class="text-sm font-bold">Alterações por turma</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Exibe as 200 alterações mais recentes (manuais e de importação).</p>
+            ${historico.length
+              ? `<div class="overflow-x-auto"><table class="w-full text-left border-collapse min-w-[680px] text-xs">
+                  <thead><tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500"><th class="py-2 px-2">Quando</th><th class="py-2 px-2">Turma</th><th class="py-2 px-2">Campo</th><th class="py-2 px-2">De</th><th class="py-2 px-2">Para</th><th class="py-2 px-2">Origem</th></tr></thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800">${historico.slice(0, 200).map(x => `<tr>
+                    <td class="py-2 px-2 whitespace-nowrap tabular-nums">${esc(x.quando)}</td>
+                    <td class="py-2 px-2 font-medium">${esc(x.nome)} <span class="text-slate-400">(${esc(x.turma)})</span></td>
+                    <td class="py-2 px-2">${ROT[x.campo] || esc(x.campo)}</td>
+                    <td class="py-2 px-2 text-slate-500">${esc(fmtV(x.campo, x.de))}</td>
+                    <td class="py-2 px-2 font-medium">${esc(fmtV(x.campo, x.para))}</td>
+                    <td class="py-2 px-2"><span class="px-2 py-0.5 rounded-full text-[11px] font-medium ${x.origem === 'manual' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'}">${esc(x.origem)}</span></td>
+                  </tr>`).join('')}</tbody>
+                </table></div>`
+              : '<p class="text-xs text-slate-400">Nenhuma alteração registrada ainda.</p>'}
+          </div>`;
+      }
+    };
+
+    function render() {
+      renderNav();
+      const app = document.getElementById('app');
+      if (app) app.innerHTML = VIEWS[aba]();
+      const fd = document.getElementById('footer-date');
+      if (fd) fd.textContent = `Referência atual: ${hojeTxt()}`;
+    }
+
+    // Monitora conectividade do navegador para feedback imediato
+    window.addEventListener('offline', () => atualizarSeloSync('offline'));
+    window.addEventListener('online', () => {
+      if (FIREBASE_ATIVO) atualizarSeloSync('online');
+    });
+
+    /* =========================================================================
+     * 12. INICIALIZAÇÃO
+     * ========================================================================= */
+    carregarListaUnidades();
+    loadUnidade(unidadeAtual);
+  </script>
+</body>
+</html>
