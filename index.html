@@ -113,6 +113,44 @@
     .ev {
       position: relative;
       z-index: 1;
+      overflow: hidden;
+    }
+    .ev-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ev-stack.multi {
+      gap: 4px;
+    }
+    .ev.normal {
+      height: 122px;
+      padding: 8px 10px;
+    }
+    .ev.compact {
+      height: 64px;
+      padding: 4px 7px;
+      justify-content: space-between;
+    }
+    .apr-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background-color: #fef3c7;
+      color: #92400e;
+      white-space: nowrap;
+      line-height: 1.25;
+    }
+    .ev.compact .sem {
+      bottom: 5px;
+      right: 6px;
+      width: 10px;
+      height: 10px;
+      border-width: 1.5px;
     }
 
     /* Semáforo: bolinha limpa sem "?" que expande em pílula na própria cor ao hover */
@@ -482,8 +520,16 @@
       ini: 'Início',
       fim: 'Fim',
       dias: 'Dias',
+      aprendizagem: 'Aprendizagem',
+      diasApr: 'Dias (Aprendizagem)',
       oculta: 'Ocultação',
       saiu: 'Relatório'
+    };
+
+    const DIAS_APR_LABELS = {
+      seg_ter: 'Seg. e Ter.',
+      qui_sex: 'Qui. e Sex.',
+      seg_sex: 'Seg. a Sex.'
     };
 
     const TURNOS = ['Manhã', 'Tarde', 'Noite'];
@@ -530,7 +576,7 @@
         return {
           temSabado: false,
           AMB: CTH_AMB.map(a => ({ ...a })),
-          turmas: CTH_TURMAS.map(t => ({ origem: 'relatorio', dias: 'sem', oculta: null, saiu: null, ...t })),
+          turmas: CTH_TURMAS.map(t => ({ origem: 'relatorio', dias: 'sem', aprendizagem: false, diasApr: '', oculta: null, saiu: null, ...t })),
           docentes: [],
           historico: [],
           importacoes: []
@@ -567,6 +613,8 @@
           ? base.turmas.map(t => ({
               origem: t.origem || 'relatorio',
               dias: t.dias || 'sem',
+              aprendizagem: Boolean(t.aprendizagem),
+              diasApr: t.aprendizagem ? String(t.diasApr || 'seg_ter') : '',
               oculta: t.oculta ?? null,
               saiu: t.saiu ?? null,
               id: String(t.id || ''),
@@ -891,6 +939,24 @@
 
     const sobrepoe = (a, b) => hm(a.ini) < hm(b.fim) && hm(b.ini) < hm(a.fim);
 
+    function labelDiasApr(t) {
+      if (!t || !t.aprendizagem) return '';
+      return DIAS_APR_LABELS[t.diasApr] || 'Seg. e Ter.';
+    }
+
+    function diasDaSemana(t) {
+      if (ehTurmaSabado(t)) return ['sab'];
+      if (t.aprendizagem && t.diasApr === 'seg_ter') return ['seg', 'ter'];
+      if (t.aprendizagem && t.diasApr === 'qui_sex') return ['qui', 'sex'];
+      return ['seg', 'ter', 'qua', 'qui', 'sex'];
+    }
+
+    function diasSobrepoem(a, b) {
+      const diasA = diasDaSemana(a);
+      const diasB = diasDaSemana(b);
+      return diasA.some(d => diasB.includes(d));
+    }
+
     const dataPt = s => {
       const partes = String(s || '').trim().split('/').map(Number);
       if (partes.length !== 3 || partes.some(isNaN)) return hojeSemHora();
@@ -915,6 +981,8 @@
     const fmtV = (campo, v) => {
       if (campo === 'sala') return v ? ambNome(v) : '—';
       if (campo === 'dias') return (v === 'sab' || v === 'sabado') ? 'Sábado' : 'Seg a Sex';
+      if (campo === 'aprendizagem') return v ? 'Sim' : 'Não';
+      if (campo === 'diasApr') return DIAS_APR_LABELS[v] || '—';
       return (v === null || v === undefined || v === '') ? '—' : String(v);
     };
 
@@ -949,8 +1017,7 @@
 
     function conflitos(t) {
       if (!t.sala && !t.doc) return [];
-      const sabT = ehTurmaSabado(t);
-      return ativas().filter(o => o !== t && ehTurmaSabado(o) === sabT && sobrepoe(t, o) && (
+      return ativas().filter(o => o !== t && diasSobrepoem(t, o) && sobrepoe(t, o) && (
         (t.sala && o.sala === t.sala) || (t.doc && o.doc === t.doc)
       ));
     }
@@ -1362,7 +1429,45 @@
       if (novo === t[campo]) return;
       registrar(t, campo, t[campo], novo, 'manual');
       t[campo] = novo;
-      if (campo === 'dias' && novo === 'sab') temSabado = true;
+      if (campo === 'dias' && novo === 'sab') {
+        temSabado = true;
+        if (t.aprendizagem) {
+          registrar(t, 'aprendizagem', true, false, 'manual');
+          t.aprendizagem = false;
+          if (t.diasApr) {
+            registrar(t, 'diasApr', t.diasApr, '', 'manual');
+            t.diasApr = '';
+          }
+        }
+      }
+      save();
+      render();
+    }
+
+    function toggleAprendizagem(id, ativo) {
+      if (!podeEditar()) return;
+      const t = turmas.find(x => x.id === id);
+      if (!t) return;
+      const novo = Boolean(ativo);
+      if (novo === Boolean(t.aprendizagem)) return;
+
+      registrar(t, 'aprendizagem', Boolean(t.aprendizagem), novo, 'manual');
+      t.aprendizagem = novo;
+
+      if (novo) {
+        if (ehTurmaSabado(t)) {
+          registrar(t, 'dias', t.dias, 'sem', 'manual');
+          t.dias = 'sem';
+        }
+        const diasPadrao = t.diasApr || 'seg_ter';
+        registrar(t, 'diasApr', t.diasApr || '', diasPadrao, 'manual');
+        t.diasApr = diasPadrao;
+      } else {
+        if (t.diasApr) {
+          registrar(t, 'diasApr', t.diasApr, '', 'manual');
+        }
+        t.diasApr = '';
+      }
       save();
       render();
     }
@@ -1566,7 +1671,7 @@
       if (!p || p.erro) return;
       p.novas.forEach(n => {
         if (n.dias === 'sab') temSabado = true;
-        const t = { ...n, seg: '—', real: null, sala: null, doc: '', mod: '', origem: 'relatorio', oculta: null, saiu: null };
+        const t = { ...n, seg: '—', real: null, sala: null, doc: '', mod: '', aprendizagem: false, diasApr: '', origem: 'relatorio', oculta: null, saiu: null };
         turmas.push(t);
         registrar(t, 'Turma criada', null, 'importação', 'importação');
       });
@@ -1733,8 +1838,23 @@
         if (mapaFiltro === 'conflito' && !conflitos(t).length) return false;
         if (mapaFiltro === 'sem_docente' && t.doc) return false;
         if (mapaFiltro === 'encerrando' && !semaforo(t).encerrando) return false;
+        if (mapaFiltro === 'aprendizagem' && !t.aprendizagem) return false;
         if (!q) return true;
-        const alvo = norm(`${t.id} ${t.nome} ${t.doc} ${ambNome(t.sala)} ${t.seg}`);
+        const aprTxt = t.aprendizagem ? `aprendizagem ${labelDiasApr(t)}` : '';
+        const alvo = norm(`${t.id} ${t.nome} ${t.doc} ${ambNome(t.sala)} ${t.seg} ${aprTxt}`);
+        return alvo.includes(q);
+      });
+    }
+
+    function filtrarTurmasLista(lista) {
+      const q = norm(turmasBusca.trim());
+      return lista.filter(t => {
+        if (turmasFiltro === 'pendencia' && !pendencias(t).length) return false;
+        if (turmasFiltro === 'conflito' && !conflitos(t).length) return false;
+        if (turmasFiltro === 'sem_docente' && t.doc) return false;
+        if (!q) return true;
+        const aprTxt = t.aprendizagem ? `aprendizagem ${labelDiasApr(t)}` : '';
+        const alvo = norm(`${t.id} ${t.nome} ${t.seg} ${t.doc} ${ambNome(t.sala)} ${t.mod} ${aprTxt}`);
         return alvo.includes(q);
       });
     }
@@ -1791,25 +1911,49 @@
         turnos.forEach(tn => {
           h += `<tr class="border-b border-slate-200 dark:border-slate-800"><td class="tn bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 px-3 py-3 align-top">${tn}</td>`;
           h += ambEscopo.map(a => {
+            const ordemApr = t => {
+              if (t.aprendizagem && t.diasApr === 'seg_ter') return 0;
+              if (t.aprendizagem && t.diasApr === 'qui_sex') return 1;
+              return 2;
+            };
             const ts = T.filter(t => t.sala === a.id && turnosDaTurma(t).includes(tn))
-              .sort((x, y) => hm(x.ini) - hm(y.ini));
-            return `<td class="p-1.5 align-top">${ts.map(t => {
+              .sort((x, y) => ordemApr(x) - ordemApr(y) || hm(x.ini) - hm(y.ini));
+            const multi = ts.length >= 2;
+            const cardsHtml = ts.map(t => {
               const c = conflitos(t).length > 0;
               const s = semaforo(t);
               const ehCont = turnosDaTurma(t)[0] !== tn;
               const realTxt = (t.real !== null && t.real !== undefined && t.real !== '') ? t.real : '—';
-              return `<div class="ev rounded-lg p-2.5 mb-1.5 text-white text-xs leading-snug flex flex-col gap-0.5 min-h-[116px] ${c ? 'bg-rose-700 dark:bg-rose-800' : 'bg-senac-600 dark:bg-senac-700'}">
+              const aprLbl = labelDiasApr(t);
+              const aprBadge = aprLbl ? `<span class="apr-badge">${esc(aprLbl)}</span>` : '';
+              const contBadge = ehCont ? '<span class="text-[9px] uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded">cont.</span>' : '';
+              const tooltipTxt = `${t.nome} (${t.id}) · ${t.ini}–${t.fim}${aprLbl ? ' · ' + aprLbl : ''} · ${realTxt}/${t.sig} alunos · ${t.doc || 'sem docente'} · ${t.periodo}`;
+
+              if (multi) {
+                return `<div class="ev compact rounded-lg text-white text-xs leading-tight flex flex-col ${c ? 'bg-rose-700 dark:bg-rose-800' : 'bg-senac-600 dark:bg-senac-700'}" title="${esc(tooltipTxt)}">
+                  <span class="sem ${s.cls}" data-tip="${esc(s.txt)}"></span>
+                  <div class="flex items-center justify-between gap-1 min-w-0">
+                    <span class="text-[10px] opacity-85 font-medium truncate">${esc(t.id)}</span>
+                    <div class="flex items-center gap-1 shrink-0">${aprBadge}${contBadge}</div>
+                  </div>
+                  <div class="font-bold text-[11.5px] truncate">${esc(t.nome)}</div>
+                  <div class="text-[10px] opacity-90 truncate pr-4">${t.ini}–${t.fim} · <b>${realTxt}/${t.sig}</b> · ${t.doc ? esc(t.doc) : 'sem doc.'}</div>
+                </div>`;
+              }
+
+              return `<div class="ev normal rounded-lg text-white text-xs leading-snug flex flex-col gap-0.5 ${c ? 'bg-rose-700 dark:bg-rose-800' : 'bg-senac-600 dark:bg-senac-700'}" title="${esc(tooltipTxt)}">
                 <span class="sem ${s.cls}" data-tip="${esc(s.txt)}"></span>
                 <div class="flex items-center justify-between gap-1">
                   <span class="text-[10px] opacity-80 font-medium">${esc(t.id)}</span>
-                  ${ehCont ? '<span class="text-[9px] uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded">cont.</span>' : ''}
+                  <div class="flex items-center gap-1 shrink-0">${aprBadge}${contBadge}</div>
                 </div>
                 <div class="font-bold text-[12.5px] line-clamp-2">${esc(t.nome)}</div>
                 <div class="text-[11px] opacity-90" title="Alunos real / Alunos SIG">${t.ini}–${t.fim} · <b>${realTxt}/${t.sig}</b> alunos</div>
                 <div class="text-[10.5px] opacity-80">${esc(t.periodo)}</div>
                 <div class="text-[11px] opacity-90 truncate pr-4">${t.doc ? esc(t.doc) : 'sem docente'}</div>
               </div>`;
-            }).join('')}</td>`;
+            }).join('');
+            return `<td class="p-1.5 align-top">${ts.length ? `<div class="ev-stack ${multi ? 'multi' : ''}">${cardsHtml}</div>` : ''}</td>`;
           }).join('');
           h += `</tr>`;
         });
@@ -1882,6 +2026,21 @@
                    <option value="sem" ${!ehTurmaSabado(t) ? 'selected' : ''}>Seg a Sex</option>
                    <option value="sab" ${ehTurmaSabado(t) ? 'selected' : ''}>Sábado</option>
                  </select>`
+              : ''}
+            ${!ehTurmaSabado(t)
+              ? `<div class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                   <label class="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+                     <input type="checkbox" ${t.aprendizagem ? 'checked' : ''} onchange="toggleAprendizagem('${t.id}', this.checked)" class="rounded border-slate-300 text-senac-600 focus:ring-senac-500" />
+                     <span>Aprendizagem</span>
+                   </label>
+                   ${t.aprendizagem
+                     ? `<select onchange="upd('${t.id}','diasApr',this.value)" class="text-[11px] font-medium rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 px-1.5 py-0.5">
+                          <option value="seg_ter" ${t.diasApr === 'seg_ter' ? 'selected' : ''}>Seg. e Ter.</option>
+                          <option value="qui_sex" ${t.diasApr === 'qui_sex' ? 'selected' : ''}>Qui. e Sex.</option>
+                          <option value="seg_sex" ${t.diasApr === 'seg_sex' ? 'selected' : ''}>Seg. a Sex.</option>
+                        </select>`
+                     : ''}
+                 </div>`
               : ''}
           </td>
           <td class="py-2.5 px-2 align-top">
@@ -1968,6 +2127,7 @@
               ${chip('conflito', 'Com conflito')}
               ${chip('sem_docente', 'Sem docente')}
               ${chip('encerrando', 'Encerrando em ≤30d')}
+              ${chip('aprendizagem', 'Aprendizagem')}
             </div>
           </div>
 
