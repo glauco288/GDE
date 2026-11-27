@@ -1,1 +1,2185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Executivo &amp; Coleta — Oferta Concomitante Rede Pública (Senac Amazonas)</title>
 
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            senac: {
+              navy: '#004A8D',
+              navyDark: '#003668',
+              blue: '#0066B3',
+              orange: '#F7941D',
+              bg: '#F4F7FA',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      background-color: #F4F7FA;
+      color: #1E293B;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .tab-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #E2E8F0;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94A3B8;
+      border-radius: 999px;
+    }
+
+    /* ==================== REGRAS DE IMPRESSÃO / PDF ==================== */
+    @media print {
+      body {
+        background-color: #FFFFFF !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      header {
+        position: static !important;
+        box-shadow: none !important;
+      }
+      #tab-input {
+        display: none !important;
+      }
+      #tab-exec,
+      #tab-evasao,
+      #tab-gov,
+      #tab-2027 {
+        display: block !important;
+        page-break-after: always;
+        margin-bottom: 24px;
+      }
+      #tab-2027 {
+        page-break-after: auto;
+      }
+      .print-section-title {
+        display: flex !important;
+      }
+      .card-avoid-break {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      canvas {
+        max-width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ==================== TOPO FIXO INSTITUCIONAL ==================== -->
+  <header class="bg-gradient-to-r from-[#003668] via-[#004A8D] to-[#005BA8] text-white shadow-lg sticky top-0 z-30">
+    <div class="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <!-- Identidade Senac Amazonas -->
+        <div class="flex items-start sm:items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0">
+            <i data-lucide="bar-chart-3" class="w-6 h-6 text-[#F7941D]"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#F7941D] text-white">
+                Senac Amazonas
+              </span>
+              <span id="headerFilledBadge" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/15 text-blue-50 border border-white/20">
+                0/6 unidades preenchidas
+              </span>
+            </div>
+            <h1 class="text-base sm:text-lg lg:text-xl font-extrabold tracking-tight leading-tight mt-0.5">
+              Dashboard Executivo &amp; Coleta — Oferta Concomitante Rede Pública
+            </h1>
+          </div>
+        </div>
+
+        <!-- Controles Globais -->
+        <div class="flex flex-wrap items-center gap-2.5 no-print">
+          <div class="relative min-w-[200px] flex-1 sm:flex-none">
+            <label for="globalUnitFilter" class="sr-only">Filtrar Dashboard por Unidade</label>
+            <div class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-blue-200">
+              <i data-lucide="filter" class="w-4 h-4"></i>
+            </div>
+            <select id="globalUnitFilter"
+              class="w-full appearance-none bg-white/10 hover:bg-white/15 text-white text-xs sm:text-sm font-semibold pl-9 pr-8 py-2 rounded-xl border border-white/25 focus:outline-none focus:ring-2 focus:ring-[#F7941D] transition cursor-pointer">
+              <option value="all" class="text-slate-800">Todas as Unidades</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 pr-2.5 flex items-center text-blue-200">
+              <i data-lucide="chevron-down" class="w-4 h-4"></i>
+            </div>
+          </div>
+
+          <button id="btnPrint" type="button"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F7941D] hover:bg-[#e58512] text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer"
+            title="Gerar PDF ou imprimir apenas as 4 abas executivas">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Imprimir / PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navegação por 5 Abas -->
+      <nav class="mt-3.5 pt-3 border-t border-white/15 flex items-center gap-2 overflow-x-auto pb-1 no-print" aria-label="Navegação Principal">
+        <button data-tab="tab-input" class="tab-btn active flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition cursor-pointer bg-[#F7941D] text-white shadow-sm">
+          <i data-lucide="clipboard-edit" class="w-4 h-4"></i>
+          <span>1. Entrada de Dados (Unidades)</span>
+        </button>
+        <button data-tab="tab-exec" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition cursor-pointer text-blue-100 hover:bg-white/10">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span>2. Visão Executiva</span>
+        </button>
+        <button data-tab="tab-evasao" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition cursor-pointer text-blue-100 hover:bg-white/10">
+          <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+          <span>3. Evasão &amp; Campo</span>
+        </button>
+        <button data-tab="tab-gov" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition cursor-pointer text-blue-100 hover:bg-white/10">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <span>4. Governança &amp; Auditoria</span>
+        </button>
+        <button data-tab="tab-2027" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition cursor-pointer text-blue-100 hover:bg-white/10">
+          <i data-lucide="trending-up" class="w-4 h-4"></i>
+          <span>5. Horizonte 2027 &amp; Ações</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Banner de Filtro Ativo nas Abas Executivas -->
+  <div id="activeFilterBanner" class="hidden bg-amber-50 border-b border-amber-200 no-print">
+    <div class="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-2 text-xs sm:text-sm text-amber-900">
+      <div class="flex items-center gap-2">
+        <i data-lucide="filter" class="w-4 h-4 text-[#F7941D]"></i>
+        <span>Dashboard filtrado para a unidade: <strong id="activeFilterName"></strong></span>
+      </div>
+      <button id="btnClearFilter" type="button" class="font-bold text-[#004A8D] hover:underline cursor-pointer">
+        Mostrar todas as unidades
+      </button>
+    </div>
+  </div>
+
+  <!-- Sugestões de Cursos Técnicos -->
+  <datalist id="cursosSugestoes">
+    <option value="Técnico em Administração"></option>
+    <option value="Técnico em Nutrição e Dietética"></option>
+    <option value="Técnico em Informática"></option>
+    <option value="Técnico em Logística"></option>
+    <option value="Técnico em Redes de Computadores"></option>
+    <option value="Técnico em Recursos Humanos"></option>
+    <option value="Técnico em Rádio e TV"></option>
+  </datalist>
+
+  <!-- Input oculto para importar 1 ou mais JSONs -->
+  <input id="jsonImportInput" type="file" accept=".json,application/json" multiple class="hidden" />
+
+  <!-- ==================== CONTEÚDO PRINCIPAL ==================== -->
+  <main class="flex-1 max-w-[1380px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ============================================================ -->
+    <!-- ABA 1: ENTRADA DE DADOS (UNIDADES)                           -->
+    <!-- ============================================================ -->
+    <section id="tab-input" class="tab-panel active space-y-5 no-print">
+
+      <!-- Barra de Seleção Rápida de Unidades em Pílulas + Ações JSON -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div>
+            <h2 class="text-base font-extrabold text-[#004A8D]">Selecione a Unidade para Preenchimento</h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Todas as alterações são salvas automaticamente no navegador e refletem imediatamente nas abas do dashboard.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btnExportSingleUnit" type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#004A8D] border border-blue-200 text-xs font-bold transition cursor-pointer">
+              <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
+              <span>Exportar só esta Unidade (.json)</span>
+            </button>
+
+            <button id="btnImportJson" type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#004A8D] hover:bg-[#003668] text-white text-xs font-bold shadow-sm transition cursor-pointer"
+              title="Selecione um ou vários arquivos .json das unidades para consolidar automaticamente">
+              <i data-lucide="upload" class="w-3.5 h-3.5 text-[#F7941D]"></i>
+              <span>Importar / Mesclar JSON(s)</span>
+            </button>
+
+            <button id="btnExportAll" type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition cursor-pointer">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Exportar Backup Completo (.json)</span>
+            </button>
+
+            <button id="btnClearNumeric" type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition cursor-pointer">
+              <i data-lucide="eraser" class="w-3.5 h-3.5"></i>
+              <span>Limpar Dados Numéricos</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pílulas de Seleção de Unidades -->
+        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+          <div id="unitPillsContainer" class="flex flex-wrap items-center gap-2"></div>
+          <button id="btnAddUnit" type="button"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border-2 border-dashed border-slate-300 hover:border-[#004A8D] hover:text-[#004A8D] text-slate-600 text-xs font-bold transition cursor-pointer">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Nova Unidade</span>
+          </button>
+        </div>
+
+        <!-- Edição da Sigla da Unidade Selecionada -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 bg-slate-50/70 -mx-5 -mb-5 px-5 py-3.5 rounded-b-xl">
+          <div class="flex flex-wrap items-center gap-3">
+            <label for="inputUnitSigla" class="text-xs font-bold text-slate-600 uppercase tracking-wider">
+              Sigla da Unidade Selecionada:
+            </label>
+            <input id="inputUnitSigla" type="text" placeholder="Ex: CEP LSR"
+              class="w-44 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-extrabold text-[#004A8D] uppercase focus:outline-none focus:ring-2 focus:ring-[#004A8D]" />
+            <span id="autoSaveBadge" class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+              <span>Salvo automaticamente</span>
+            </span>
+          </div>
+          <button id="btnDeleteUnit" type="button"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold transition cursor-pointer self-start sm:self-auto">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>Remover Unidade</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- GRID PRINCIPAL: BLOCO 1 (CURSOS) + BLOCO 2 (SÉRIES) -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+
+        <!-- BLOCO 1 — CURSOS OFERTADOS (AGRUPADO POR CURSO) -->
+        <div class="xl:col-span-7 bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-md bg-blue-100 text-[#004A8D] text-[11px] font-extrabold">BLOCO 1</span>
+                <h3 class="text-base font-bold text-[#004A8D]">Cursos Ofertados (Visão Agrupada)</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Informe o código, nome do curso técnico, carga horária e total de matrículas ativas.
+              </p>
+            </div>
+            <button id="btnAddCourse" type="button"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F7941D] hover:bg-[#e58512] text-white text-xs font-bold shadow-sm transition cursor-pointer shrink-0 self-start sm:self-auto">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>Adicionar Curso</span>
+            </button>
+          </div>
+
+          <div id="coursesListContainer" class="p-5 space-y-3"></div>
+
+          <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between gap-2 text-xs sm:text-sm">
+            <span class="font-semibold text-slate-600">Total de Matrículas Ativas (soma dos cursos):</span>
+            <span id="block1TotalAtivos" class="text-base font-extrabold text-[#004A8D]">0</span>
+          </div>
+        </div>
+
+        <!-- BLOCO 2 — RETRATO POR SÉRIE DA UNIDADE -->
+        <div class="xl:col-span-5 bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-md bg-orange-100 text-[#c7710a] text-[11px] font-extrabold">BLOCO 2</span>
+              <h3 class="text-base font-bold text-[#004A8D]">Retrato por Série da Unidade</h3>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Visão consolidada da unidade inteira distribuída por série do Ensino Médio.
+            </p>
+          </div>
+
+          <div class="p-5 space-y-4">
+            <!-- 1º Ano -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div class="text-xs font-extrabold text-[#004A8D] mb-2.5 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                <span>1º Ano do Ensino Médio</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="inputAno1Ativos" class="block text-[11px] font-semibold text-slate-600 mb-1">Matrículas Ativas</label>
+                  <input id="inputAno1Ativos" type="number" min="0" step="1"
+                    class="series-input w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-[#004A8D] focus:outline-none focus:ring-2 focus:ring-[#004A8D]" />
+                </div>
+                <div>
+                  <label for="inputAno1Evadidos" class="block text-[11px] font-semibold text-slate-600 mb-1">Alunos Evadidos</label>
+                  <input id="inputAno1Evadidos" type="number" min="0" step="1"
+                    class="series-input w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 2º Ano -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div class="text-xs font-extrabold text-[#004A8D] mb-2.5 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#004A8D]"></span>
+                <span>2º Ano do Ensino Médio</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="inputAno2Ativos" class="block text-[11px] font-semibold text-slate-600 mb-1">Matrículas Ativas</label>
+                  <input id="inputAno2Ativos" type="number" min="0" step="1"
+                    class="series-input w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-[#004A8D] focus:outline-none focus:ring-2 focus:ring-[#004A8D]" />
+                </div>
+                <div>
+                  <label for="inputAno2Evadidos" class="block text-[11px] font-semibold text-slate-600 mb-1">Alunos Evadidos</label>
+                  <input id="inputAno2Evadidos" type="number" min="0" step="1"
+                    class="series-input w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 3º Ano -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div class="text-xs font-extrabold text-[#004A8D] mb-2.5 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#F7941D]"></span>
+                <span>3º Ano do Ensino Médio</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="inputAno3Ativos" class="block text-[11px] font-semibold text-slate-600 mb-1">Matrículas Ativas</label>
+                  <input id="inputAno3Ativos" type="number" min="0" step="1"
+                    class="series-input w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-[#004A8D] focus:outline-none focus:ring-2 focus:ring-[#004A8D]" />
+                </div>
+                <div>
+                  <label for="inputAno3Evadidos" class="block text-[11px] font-semibold text-slate-600 mb-1">Alunos Evadidos</label>
+                  <input id="inputAno3Evadidos" type="number" min="0" step="1"
+                    class="series-input w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200/80 grid grid-cols-3 gap-2 text-center">
+            <div>
+              <div class="text-[10px] font-bold uppercase text-slate-500">Total Ativos por Série</div>
+              <div id="block2TotalAtivos" class="text-base font-extrabold text-[#004A8D]">0</div>
+            </div>
+            <div class="border-x border-slate-200">
+              <div class="text-[10px] font-bold uppercase text-slate-500">Total Evadidos</div>
+              <div id="block2TotalEvadidos" class="text-base font-extrabold text-rose-600">0</div>
+            </div>
+            <div>
+              <div class="text-[10px] font-bold uppercase text-slate-500">Taxa de Evasão</div>
+              <div id="block2TaxaEvasao" class="text-base font-extrabold text-[#F7941D]">0,0%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BANNER DE VALIDAÇÃO AUTOMÁTICA DE CONSISTÊNCIA -->
+      <div id="consistencyBanner" class="rounded-xl p-4 border flex items-center gap-3 transition-all">
+        <div id="consistencyIcon" class="shrink-0"></div>
+        <div id="consistencyText" class="text-xs sm:text-sm font-semibold"></div>
+      </div>
+
+      <!-- BLOCO 3 — PROJEÇÃO 2027 E EXPANSÃO -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[11px] font-extrabold">BLOCO 3</span>
+          <h3 class="text-base font-bold text-[#004A8D]">Projeção 2027 e Expansão</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div class="md:col-span-4">
+            <label for="inputPrev2027" class="block text-xs font-bold text-slate-700 mb-1.5">
+              Previsão de Matrículas para 2027
+            </label>
+            <input id="inputPrev2027" type="number" min="0" step="1"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-base font-extrabold text-[#004A8D] focus:outline-none focus:ring-2 focus:ring-[#004A8D]" />
+          </div>
+
+          <div class="md:col-span-8">
+            <label for="inputExpansao" class="block text-xs font-bold text-slate-700 mb-1.5">
+              Plano de Expansão / Observações para Próximos Anos
+            </label>
+            <textarea id="inputExpansao" rows="2"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#004A8D]"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOCO 4 — GOVERNANÇA, ESTRUTURA E RELATO DE CAMPO -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-extrabold">BLOCO 4</span>
+            <h3 class="text-base font-bold text-[#004A8D]">Governança, Estrutura e Relato de Campo</h3>
+          </div>
+          <span class="text-xs text-slate-500">Dados qualitativos pré-carregados e totalmente editáveis</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label for="inputInstrumento" class="block text-xs font-bold text-slate-700 mb-1">Instrumento Jurídico</label>
+            <select id="inputInstrumento" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#004A8D]">
+              <option value="Acordo de Cooperação Técnica">Acordo de Cooperação Técnica</option>
+              <option value="Sem Instrumento Formal">Sem Instrumento Formal</option>
+              <option value="Apenas PSG">Apenas PSG</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inputCodigo13" class="block text-xs font-bold text-slate-700 mb-1">Usa Código 13 no Sistema?</label>
+            <select id="inputCodigo13" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#004A8D]">
+              <option value="Sim">Sim</option>
+              <option value="Não">Não</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inputProtocolo" class="block text-xs font-bold text-slate-700 mb-1">Protocolo para Alunos Transferidos?</label>
+            <select id="inputProtocolo" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#004A8D]">
+              <option value="Sim">Sim</option>
+              <option value="Não">Não</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inputEnem" class="block text-xs font-bold text-slate-700 mb-1">Acompanhamento de Desempenho no ENEM?</label>
+            <select id="inputEnem" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#004A8D]">
+              <option value="Sim - Via Escola Parceira">Sim - Via Escola Parceira</option>
+              <option value="Sim - Senac">Sim - Senac</option>
+              <option value="Não">Não</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inputLocal" class="block text-xs font-bold text-slate-700 mb-1">Local das Aulas</label>
+            <select id="inputLocal" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#004A8D]">
+              <option value="Unidade Senac">Unidade Senac</option>
+              <option value="Escola Parceira">Escola Parceira</option>
+              <option value="Ambos os Locais">Ambos os Locais</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inputApoio" class="block text-xs font-bold text-slate-700 mb-1">Apoio Complementar (Transporte/Alimentação)</label>
+            <select id="inputApoio" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#004A8D]">
+              <option value="Não oferece">Não oferece</option>
+              <option value="Material Didático e Infraestrutura">Material Didático e Infraestrutura</option>
+              <option value="Completo">Completo</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="inputRelato" class="block text-xs font-bold text-slate-700 mb-1">
+            Relato de Campo e Principais Fatores de Evasão
+          </label>
+          <textarea id="inputRelato" rows="3"
+            class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#004A8D]"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ABA 2: VISÃO EXECUTIVA                                       -->
+    <!-- ============================================================ -->
+    <section id="tab-exec" class="tab-panel space-y-6">
+      <div class="print-section-title hidden items-center justify-between border-b-2 border-[#004A8D] pb-2 mb-4">
+        <span class="font-bold text-lg text-[#004A8D]">1. Visão Executiva — Oferta Concomitante (Senac Amazonas)</span>
+      </div>
+
+      <!-- Banner Estado Vazio -->
+      <div id="emptyDataBanner" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
+        <div class="flex items-start sm:items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#004A8D] text-white flex items-center justify-center shrink-0">
+            <i data-lucide="info" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-[#004A8D]">Preencha os dados na Aba 1 para visualizar os gráficos</h3>
+            <p class="text-xs text-slate-600 mt-0.5">
+              Os dados qualitativos e de governança já estão carregados. Insira os cursos e quantitativos por série ou importe os arquivos JSON das unidades.
+            </p>
+          </div>
+        </div>
+        <button id="btnGoToInput" type="button"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F7941D] hover:bg-[#e58512] text-white text-xs font-bold shadow-sm transition cursor-pointer shrink-0 self-start sm:self-auto">
+          <i data-lucide="clipboard-edit" class="w-3.5 h-3.5"></i>
+          <span>Ir para Entrada de Dados</span>
+        </button>
+      </div>
+
+      <!-- 4 Cards KPI -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Matrículas Ativas</span>
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-[#004A8D] flex items-center justify-center">
+              <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div id="kpiAtivos" class="text-3xl font-extrabold text-[#004A8D] mt-3">0</div>
+          <p id="kpiAtivosSub" class="text-xs text-slate-500 mt-1.5">Total consolidado das unidades</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Alunos Evadidos</span>
+            <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <i data-lucide="user-minus" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div id="kpiEvadidos" class="text-3xl font-extrabold text-rose-600 mt-3">0</div>
+          <p id="kpiEvadidosSub" class="text-xs text-slate-500 mt-1.5">de 0 alunos vinculados</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Taxa de Evasão Média</span>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-[#F7941D] flex items-center justify-center">
+              <i data-lucide="percent" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div id="kpiTaxaEvasao" class="text-3xl font-extrabold text-[#F7941D] mt-3">0,0%</div>
+          <p class="text-xs text-slate-500 mt-1.5">Evadidos / (Ativos + Evadidos)</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Previsão 2027</span>
+            <div class="w-10 h-10 rounded-xl bg-sky-50 text-[#0066B3] flex items-center justify-center">
+              <i data-lucide="rocket" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div id="kpiPrev2027" class="text-3xl font-extrabold text-[#0066B3] mt-3">0</div>
+          <p class="text-xs text-slate-500 mt-1.5">Projeção total de matrículas</p>
+        </div>
+      </div>
+
+      <!-- Grid 2x2 de Gráficos -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+          <div class="mb-4">
+            <h2 class="text-base font-bold text-[#004A8D]">Matrículas Ativas vs. Alunos Evadidos por Unidade</h2>
+            <p class="text-xs text-slate-500">Comparativo consolidado por sigla institucional</p>
+          </div>
+          <div class="relative h-[280px] w-full">
+            <canvas id="chartAtivasEvadidos"></canvas>
+            <div id="emptyChart1" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 rounded-xl border border-dashed border-slate-300 text-slate-400 text-center px-4">
+              <i data-lucide="bar-chart-2" class="w-8 h-8 mb-2 opacity-60"></i>
+              <span class="text-xs font-semibold">Preencha os dados na Aba 1 para visualizar os gráficos</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+          <div class="flex items-start justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-base font-bold text-[#004A8D]">Taxa de Evasão (%) por Unidade</h2>
+              <p class="text-xs text-slate-500">Barras comparadas à linha pontilhada da média geral</p>
+            </div>
+            <span id="badgeMediaEvasao" class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold shrink-0">
+              Média: 0,0%
+            </span>
+          </div>
+          <div class="relative h-[280px] w-full">
+            <canvas id="chartTaxaEvasao"></canvas>
+            <div id="emptyChart2" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 rounded-xl border border-dashed border-slate-300 text-slate-400 text-center px-4">
+              <i data-lucide="percent" class="w-8 h-8 mb-2 opacity-60"></i>
+              <span class="text-xs font-semibold">Preencha os dados na Aba 1 para visualizar os gráficos</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+          <div class="mb-4">
+            <h2 class="text-base font-bold text-[#004A8D]">Matrículas Ativas por Curso Técnico</h2>
+            <p class="text-xs text-slate-500">Consolidado a partir do Bloco 1 (Cursos Ofertados)</p>
+          </div>
+          <div class="relative h-[280px] w-full">
+            <canvas id="chartCursos"></canvas>
+            <div id="emptyChart3" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 rounded-xl border border-dashed border-slate-300 text-slate-400 text-center px-4">
+              <i data-lucide="book-open" class="w-8 h-8 mb-2 opacity-60"></i>
+              <span class="text-xs font-semibold">Preencha os cursos no Bloco 1 para visualizar este gráfico</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+          <div class="mb-4">
+            <h2 class="text-base font-bold text-[#004A8D]">Matrículas Ativas por Série do Ensino Médio</h2>
+            <p class="text-xs text-slate-500">Consolidado a partir do Bloco 2 (1º, 2º e 3º Ano EM)</p>
+          </div>
+          <div class="relative h-[280px] w-full">
+            <canvas id="chartSeries"></canvas>
+            <div id="emptyChart4" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 rounded-xl border border-dashed border-slate-300 text-slate-400 text-center px-4">
+              <i data-lucide="pie-chart" class="w-8 h-8 mb-2 opacity-60"></i>
+              <span class="text-xs font-semibold">Preencha o Retrato por Série no Bloco 2 para visualizar este gráfico</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela Detalhada de Cursos / Turmas Ofertadas -->
+      <div class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden card-avoid-break">
+        <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-base font-bold text-[#004A8D]">Detalhamento de Cursos e Turmas Ofertadas</h2>
+            <p class="text-xs text-slate-500">Relação completa por unidade com código do curso/turma, carga horária e matrículas ativas</p>
+          </div>
+          <span id="badgeTotalTurmas" class="px-2.5 py-1 rounded-full bg-blue-50 text-[#004A8D] text-[11px] font-bold self-start sm:self-auto">
+            0 registros
+          </span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                <th class="py-3 px-4">Unidade</th>
+                <th class="py-3 px-3">Código / Curso Técnico</th>
+                <th class="py-3 px-3 text-center">Carga Horária</th>
+                <th class="py-3 px-4 text-right">Matrículas Ativas</th>
+              </tr>
+            </thead>
+            <tbody id="detailedCoursesTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ABA 3: EVASÃO & CAMPO                                        -->
+    <!-- ============================================================ -->
+    <section id="tab-evasao" class="tab-panel space-y-6">
+      <div class="print-section-title hidden items-center justify-between border-b-2 border-[#004A8D] pb-2 mb-4">
+        <span class="font-bold text-lg text-[#004A8D]">2. Diagnóstico de Evasão &amp; Relatos de Campo</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Gráfico Evasão por Série por Unidade -->
+        <div class="lg:col-span-7 bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+          <div class="mb-4">
+            <h2 class="text-base font-bold text-[#004A8D]">Evasão por Série do Ensino Médio por Unidade</h2>
+            <p class="text-xs text-slate-500">Distribuição de alunos evadidos no 1º, 2º e 3º ano por sigla</p>
+          </div>
+          <div class="relative h-[300px] w-full">
+            <canvas id="chartEvasaoSeries"></canvas>
+            <div id="emptyChartEvasao" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 rounded-xl border border-dashed border-slate-300 text-slate-400 text-center px-4">
+              <i data-lucide="alert-triangle" class="w-8 h-8 mb-2 opacity-60"></i>
+              <span class="text-xs font-semibold">Preencha os evadidos por série no Bloco 2 para visualizar este gráfico</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ranking de Risco -->
+        <div class="lg:col-span-5 bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+          <div class="mb-4">
+            <h2 class="text-base font-bold text-[#004A8D]">Ranking de Risco de Evasão</h2>
+            <p class="text-xs text-slate-500">Unidades ordenadas pela maior taxa percentual de evasão</p>
+          </div>
+          <div id="evasionRankingList" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <!-- Relatos de Campo por Unidade -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+        <div class="mb-4">
+          <h2 class="text-base font-bold text-[#004A8D]">Relatos de Campo &amp; Fatores Críticos de Permanência</h2>
+          <p class="text-xs text-slate-500">Diagnóstico qualitativo registrado pelas equipes locais no Bloco 4</p>
+        </div>
+        <div id="fieldReportsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ABA 4: GOVERNANÇA & AUDITORIA                                -->
+    <!-- ============================================================ -->
+    <section id="tab-gov" class="tab-panel space-y-6">
+      <div class="print-section-title hidden items-center justify-between border-b-2 border-[#004A8D] pb-2 mb-4">
+        <span class="font-bold text-lg text-[#004A8D]">3. Matriz de Governança &amp; Auditoria de Consistência</span>
+      </div>
+
+      <!-- 4 Cards Resumo de Governança -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm card-avoid-break">
+          <span class="text-[11px] font-bold uppercase text-slate-500">ACT Formalizado</span>
+          <div id="govCountAct" class="text-2xl font-extrabold text-[#004A8D] mt-1">0/0</div>
+          <p class="text-xs text-slate-500 mt-1">Acordo de Cooperação Técnica</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm card-avoid-break">
+          <span class="text-[11px] font-bold uppercase text-slate-500">Uso do Código 13</span>
+          <div id="govCountCod13" class="text-2xl font-extrabold text-[#004A8D] mt-1">0/0</div>
+          <p class="text-xs text-slate-500 mt-1">Identificação padrão no sistema</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm card-avoid-break">
+          <span class="text-[11px] font-bold uppercase text-slate-500">Protocolo Transferidos</span>
+          <div id="govCountProt" class="text-2xl font-extrabold text-[#F7941D] mt-1">0/0</div>
+          <p class="text-xs text-slate-500 mt-1">Fluxo formal de acolhimento</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm card-avoid-break">
+          <span class="text-[11px] font-bold uppercase text-slate-500">Consistência Numérica</span>
+          <div id="govCountConsist" class="text-2xl font-extrabold text-emerald-600 mt-1">0/0</div>
+          <p class="text-xs text-slate-500 mt-1">Bloco 1 (Cursos) = Bloco 2 (Séries)</p>
+        </div>
+      </div>
+
+      <!-- Matriz Semáforo -->
+      <div class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden card-avoid-break">
+        <div class="p-5 border-b border-slate-100">
+          <h2 class="text-base font-bold text-[#004A8D]">Matriz Semáforo de Governança e Auditoria</h2>
+          <p class="text-xs text-slate-500">Acompanhamento jurídico, sistêmico e conferência automática de integridade dos lançamentos</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                <th class="py-3.5 px-4">Unidade</th>
+                <th class="py-3.5 px-3">Instrumento Jurídico</th>
+                <th class="py-3.5 px-3 text-center">Código 13</th>
+                <th class="py-3.5 px-3 text-center">Transferidos</th>
+                <th class="py-3.5 px-3 text-center">ENEM</th>
+                <th class="py-3.5 px-3">Apoio / Local</th>
+                <th class="py-3.5 px-4 text-center">Auditoria (B1 × B2)</th>
+              </tr>
+            </thead>
+            <tbody id="governanceTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ABA 5: HORIZONTE 2027 & AÇÕES                                -->
+    <!-- ============================================================ -->
+    <section id="tab-2027" class="tab-panel space-y-6">
+      <div class="print-section-title hidden items-center justify-between border-b-2 border-[#004A8D] pb-2 mb-4">
+        <span class="font-bold text-lg text-[#004A8D]">4. Horizonte 2027 &amp; Encaminhamentos Estratégicos</span>
+      </div>
+
+      <!-- Gráfico Comparativo Atual vs Previsão 2027 -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm card-avoid-break">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-[#004A8D]">Comparativo: Matrículas Ativas Atuais vs. Previsão 2027</h2>
+            <p class="text-xs text-slate-500">Evolução projetada por unidade</p>
+          </div>
+          <span id="badge2027Delta" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#004A8D] bg-blue-50 px-3 py-1 rounded-full self-start sm:self-auto">
+            0 Atuais → 0 Previstas
+          </span>
+        </div>
+        <div class="relative h-[320px] w-full">
+          <canvas id="chartComparativo2027"></canvas>
+          <div id="emptyChart2027" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 rounded-xl border border-dashed border-slate-300 text-slate-400 text-center px-4">
+            <i data-lucide="trending-up" class="w-8 h-8 mb-2 opacity-60"></i>
+            <span class="text-xs font-semibold">Preencha as matrículas atuais e a Previsão 2027 na Aba 1 para visualizar este gráfico</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela de Planos de Expansão por Unidade -->
+      <div class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden card-avoid-break">
+        <div class="p-5 border-b border-slate-100">
+          <h2 class="text-base font-bold text-[#004A8D]">Planos de Expansão por Unidade</h2>
+          <p class="text-xs text-slate-500">Projeções numéricas de 2027 e observações qualitativas registradas no Bloco 3</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                <th class="py-3.5 px-4">Unidade</th>
+                <th class="py-3.5 px-3 text-right">Ativas Atuais</th>
+                <th class="py-3.5 px-3 text-right">Previsão 2027</th>
+                <th class="py-3.5 px-4">Plano de Expansão / Observações</th>
+              </tr>
+            </thead>
+            <tbody id="expansionTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bloco de Encaminhamentos Estratégicos (Editável e Salvo) -->
+      <div class="bg-gradient-to-br from-[#004A8D] to-[#00315E] text-white rounded-xl p-6 shadow-md card-avoid-break">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl bg-[#F7941D] text-white flex items-center justify-center shrink-0">
+            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-extrabold">Encaminhamentos Estratégicos para a Gestão</h3>
+            <p class="text-xs text-blue-100/85">
+              Propostas prioritárias para validação da chefia (editáveis diretamente e salvas automaticamente)
+            </p>
+          </div>
+        </div>
+
+        <div id="encaminhamentosGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== RODAPÉ ==================== -->
+  <footer class="bg-white border-t border-slate-200 mt-auto py-4">
+    <div class="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <span>Senac Amazonas • Dashboard Executivo &amp; Coleta — Oferta Concomitante Rede Pública</span>
+      <span>Salvamento automático local • Consolidação multi-unidade via JSON</span>
+    </div>
+  </footer>
+
+  <!-- ==================== MODAL DE CONFIRMAÇÃO ==================== -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 no-print" role="dialog" aria-modal="true">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full border border-slate-200 overflow-hidden">
+      <div class="bg-[#004A8D] text-white px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-5 h-5 text-[#F7941D]"></i>
+          <h3 id="confirmModalTitle" class="font-bold text-base">Confirmar Ação</h3>
+        </div>
+        <button id="btnCloseConfirm" type="button" class="text-blue-100 hover:text-white p-1 rounded-lg cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-5">
+        <p id="confirmModalMessage" class="text-sm text-slate-600 leading-relaxed"></p>
+        <div class="mt-5 flex items-center justify-end gap-2">
+          <button id="btnCancelConfirm" type="button" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">
+            Cancelar
+          </button>
+          <button id="btnAcceptConfirm" type="button" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm cursor-pointer">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast de Feedback -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2.5 bg-slate-900 text-white text-xs sm:text-sm font-medium px-4 py-3 rounded-xl shadow-lg no-print">
+    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+    <span id="toastMessage">Ação concluída!</span>
+  </div>
+
+  <!-- ==================== LÓGICA JAVASCRIPT ==================== -->
+  <script>
+    // =========================================================================
+    // 1. DADOS INICIAIS (NUMÉRICOS ZERADOS, QUALITATIVOS PRESERVADOS)
+    // =========================================================================
+    const STORAGE_KEY = 'senac_am_coleta_dash_v2';
+
+    function emptySeries() {
+      return {
+        ano1: { ativos: 0, evadidos: 0 },
+        ano2: { ativos: 0, evadidos: 0 },
+        ano3: { ativos: 0, evadidos: 0 }
+      };
+    }
+
+    function getDefaultUnits() {
+      return [
+        {
+          id: 'cep-lb',
+          sigla: 'CEP LB',
+          cursos: [],
+          series: emptySeries(),
+          previsao2027: 0,
+          expansao: 'Previsão de ampliação para 30 matrículas.',
+          instrumentoJuridico: 'Acordo de Cooperação Técnica',
+          codigo13: 'Sim',
+          protocoloTransferidos: 'Não',
+          acompanhamentoEnem: 'Não',
+          localAulas: 'Unidade Senac',
+          apoioComplementar: 'Não oferece',
+          relatoCampo: 'Grande parte das evasões ligada a dificuldades financeiras e deslocamento (Colônia Ventura, Conj. Castanheira, bairro Abial) com custos de catraia e mototáxi. Supervisão e docente realizaram visitas domiciliares; urge política de auxílio-transporte e alimentação.'
+        },
+        {
+          id: 'cep-mpr',
+          sigla: 'CEP MPR',
+          cursos: [],
+          series: emptySeries(),
+          previsao2027: 0,
+          expansao: 'Expansão intermunicipal para Nhamundá, Urucará, Boa Vista do Ramos e Barreirinha (25 matrículas por município = 100 atendimentos).',
+          instrumentoJuridico: 'Acordo de Cooperação Técnica',
+          codigo13: 'Sim',
+          protocoloTransferidos: 'Não',
+          acompanhamentoEnem: 'Sim - Via Escola Parceira',
+          localAulas: 'Ambos os Locais',
+          apoioComplementar: 'Não oferece',
+          relatoCampo: 'Transporte sob responsabilidade do aluno. Contrapartida das escolas em salas, laboratório e internet; escola parceira acompanha desempenho no ENEM.'
+        },
+        {
+          id: 'cep-lsr',
+          sigla: 'CEP LSR',
+          cursos: [],
+          series: emptySeries(),
+          previsao2027: 0,
+          expansao: 'Projeção de novas turmas incluindo Téc. em Administração, Redes, Informática e Téc. em Rádio e TV.',
+          instrumentoJuridico: 'Sem Instrumento Formal',
+          codigo13: 'Sim',
+          protocoloTransferidos: 'Não',
+          acompanhamentoEnem: 'Não',
+          localAulas: 'Unidade Senac',
+          apoioComplementar: 'Material Didático e Infraestrutura',
+          relatoCampo: 'Transporte é um dos maiores motivadores de evasão, pois grande parte dos alunos reside em áreas rurais. Materiais digitais desenvolvidos pelos docentes via LAB S e Canva Code.'
+        },
+        {
+          id: 'cep-jt',
+          sigla: 'CEP JT',
+          cursos: [],
+          series: emptySeries(),
+          previsao2027: 0,
+          expansao: 'Projeção de ampliação para 7 escolas parceiras (25 vagas por turma).',
+          instrumentoJuridico: 'Apenas PSG',
+          codigo13: 'Não',
+          protocoloTransferidos: 'Não',
+          acompanhamentoEnem: 'Não',
+          localAulas: 'Ambos os Locais',
+          apoioComplementar: 'Material Didático e Infraestrutura',
+          relatoCampo: 'Aulas em ambos os locais com deslocamento pactuado em cronograma. Necessário alinhar registro do Código 13 e conceito de saídas intermediárias.'
+        },
+        {
+          id: 'cep-mbi',
+          sigla: 'CEP MBI',
+          cursos: [],
+          series: emptySeries(),
+          previsao2027: 0,
+          expansao: 'Previsão de ampliação para 3 escolas (30 alunos por turma).',
+          instrumentoJuridico: 'Apenas PSG',
+          codigo13: 'Não',
+          protocoloTransferidos: 'Não',
+          acompanhamentoEnem: 'Não',
+          localAulas: 'Unidade Senac',
+          apoioComplementar: 'Material Didático e Infraestrutura',
+          relatoCampo: 'Senac disponibiliza infraestrutura pedagógica e materiais didáticos. Necessário formalizar instrumento jurídico e padronizar Código 13.'
+        },
+        {
+          id: 'cep-pjp',
+          sigla: 'CEP PJP',
+          cursos: [],
+          series: emptySeries(),
+          previsao2027: 0,
+          expansao: 'Previsão de oferta para 02 cursos, podendo ser ampliado.',
+          instrumentoJuridico: 'Sem Instrumento Formal',
+          codigo13: 'Não',
+          protocoloTransferidos: 'Não',
+          acompanhamentoEnem: 'Não',
+          localAulas: 'Unidade Senac',
+          apoioComplementar: 'Material Didático e Infraestrutura',
+          relatoCampo: 'Parceria viabilizada a partir de interesse manifestado pela escola. Aulas no turno noturno (18h às 22h) na unidade Senac. Necessário formalizar ACT e Código 13.'
+        }
+      ];
+    }
+
+    function getDefaultEncaminhamentos() {
+      return [
+        {
+          id: 'enc-1',
+          etiqueta: 'Proposta 01 • Governança',
+          titulo: 'Padronização Jurídica e Sistêmica (Minuta ACT + Código 13)',
+          descricao: 'Institucionalizar minuta padrão de Acordo de Cooperação Técnica para regularizar todas as unidades parceiras e uniformizar o lançamento de produção sob o Código 13 antes do ciclo 2027.'
+        },
+        {
+          id: 'enc-2',
+          etiqueta: 'Proposta 02 • Retenção',
+          titulo: 'Estratégia de Retenção e Transporte junto à SEDUC',
+          descricao: 'Articular contrapartida de transporte escolar e apoio à permanência junto à SEDUC e Prefeituras, priorizando unidades com estudantes de zonas rurais e ribeirinhas.'
+        },
+        {
+          id: 'enc-3',
+          etiqueta: 'Proposta 03 • Fluxo Acadêmico',
+          titulo: 'Protocolo Único de Transferidos e Acompanhamento ENEM',
+          descricao: 'Estabelecer diretriz estadual para acolhimento e complementação de carga horária de alunos transferidos e replicar o modelo de acompanhamento no ENEM junto às escolas parceiras.'
+        }
+      ];
+    }
+
+    // =========================================================================
+    // 2. ESTADO GLOBAL, UTILITÁRIOS E PERSISTÊNCIA
+    // =========================================================================
+    const state = {
+      units: getDefaultUnits(),
+      encaminhamentos: getDefaultEncaminhamentos(),
+      selectedUnitId: 'cep-lb',
+      globalFilterId: 'all',
+      activeTab: 'tab-input'
+    };
+
+    const charts = {};
+    let confirmCallback = null;
+    let toastTimer = null;
+
+    function toInt(val) {
+      const n = parseInt(val, 10);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatPct(num) {
+      return (Number.isFinite(num) ? num : 0).toFixed(1).replace('.', ',') + '%';
+    }
+
+    function sanitizeUnit(u) {
+      const s = u.series || emptySeries();
+      return {
+        id: u.id || ('cep-' + Date.now() + '-' + Math.floor(Math.random() * 1000)),
+        sigla: String(u.sigla || 'NOVA UNIDADE').trim().toUpperCase(),
+        cursos: Array.isArray(u.cursos) ? u.cursos.map(c => ({
+          codigo: String(c.codigo ?? ''),
+          nome: String(c.nome ?? ''),
+          ch: toInt(c.ch),
+          ativos: toInt(c.ativos)
+        })) : [],
+        series: {
+          ano1: { ativos: toInt(s.ano1?.ativos), evadidos: toInt(s.ano1?.evadidos) },
+          ano2: { ativos: toInt(s.ano2?.ativos), evadidos: toInt(s.ano2?.evadidos) },
+          ano3: { ativos: toInt(s.ano3?.ativos), evadidos: toInt(s.ano3?.evadidos) }
+        },
+        previsao2027: toInt(u.previsao2027),
+        expansao: String(u.expansao ?? ''),
+        instrumentoJuridico: String(u.instrumentoJuridico || 'Sem Instrumento Formal'),
+        codigo13: String(u.codigo13 || 'Não'),
+        protocoloTransferidos: String(u.protocoloTransferidos || 'Não'),
+        acompanhamentoEnem: String(u.acompanhamentoEnem || 'Não'),
+        localAulas: String(u.localAulas || 'Unidade Senac'),
+        apoioComplementar: String(u.apoioComplementar || 'Não oferece'),
+        relatoCampo: String(u.relatoCampo ?? '')
+      };
+    }
+
+    function computeUnitMetrics(u) {
+      const ativosCursos = (u.cursos || []).reduce((acc, c) => acc + toInt(c.ativos), 0);
+      const a1 = toInt(u.series?.ano1?.ativos);
+      const a2 = toInt(u.series?.ano2?.ativos);
+      const a3 = toInt(u.series?.ano3?.ativos);
+      const e1 = toInt(u.series?.ano1?.evadidos);
+      const e2 = toInt(u.series?.ano2?.evadidos);
+      const e3 = toInt(u.series?.ano3?.evadidos);
+
+      const ativosSeries = a1 + a2 + a3;
+      const evadidos = e1 + e2 + e3;
+      // Usa o total por série quando preenchido; caso contrário usa o total por cursos
+      const ativos = ativosSeries > 0 ? ativosSeries : ativosCursos;
+      const vinculados = ativos + evadidos;
+      const taxaEvasao = vinculados > 0 ? (evadidos / vinculados) * 100 : 0;
+      const hasData = ativosCursos > 0 || ativosSeries > 0 || evadidos > 0 || toInt(u.previsao2027) > 0;
+      const isConsistent = ativosCursos === ativosSeries;
+
+      return {
+        u,
+        sigla: u.sigla,
+        ativosCursos,
+        ativosSeries,
+        ativos,
+        evadidos,
+        vinculados,
+        taxaEvasao,
+        a1, a2, a3,
+        e1, e2, e3,
+        previsao2027: toInt(u.previsao2027),
+        hasData,
+        isConsistent
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.units) && parsed.units.length > 0) {
+            state.units = parsed.units.map(sanitizeUnit);
+          }
+          if (Array.isArray(parsed.encaminhamentos) && parsed.encaminhamentos.length > 0) {
+            state.encaminhamentos = parsed.encaminhamentos;
+          }
+        }
+      } catch (err) {
+        console.warn('Falha ao carregar localStorage:', err);
+      }
+      if (!state.units.some(u => u.id === state.selectedUnitId)) {
+        state.selectedUnitId = state.units[0]?.id || null;
+      }
+    }
+
+    function persistState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          version: 2,
+          updatedAt: new Date().toISOString(),
+          units: state.units,
+          encaminhamentos: state.encaminhamentos
+        }));
+      } catch (err) {
+        console.warn('Falha ao salvar localStorage:', err);
+      }
+    }
+
+    function getSelectedUnit() {
+      return state.units.find(u => u.id === state.selectedUnitId) || state.units[0] || null;
+    }
+
+    function getFilteredUnits() {
+      if (state.globalFilterId === 'all') return state.units;
+      const found = state.units.find(u => u.id === state.globalFilterId);
+      return found ? [found] : state.units;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMessage').textContent = msg;
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex');
+      }, 3200);
+    }
+
+    function openConfirmModal(title, message, onAccept) {
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmModalMessage').textContent = message;
+      confirmCallback = onAccept;
+      const modal = document.getElementById('confirmModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirmModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      confirmCallback = null;
+    }
+
+    function refreshIcons() {
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+    }
+
+    function destroyChart(key) {
+      if (charts[key]) {
+        charts[key].destroy();
+        charts[key] = null;
+      }
+    }
+
+    // =========================================================================
+    // 3. RENDERIZAÇÃO DO CABEÇALHO E ABA 1 (ENTRADA DE DADOS)
+    // =========================================================================
+    function renderHeaderControls() {
+      const filledCount = state.units.filter(u => computeUnitMetrics(u).hasData).length;
+      document.getElementById('headerFilledBadge').textContent =
+        `${filledCount}/${state.units.length} unidades preenchidas`;
+
+      const select = document.getElementById('globalUnitFilter');
+      const currentVal = state.globalFilterId;
+      select.innerHTML = `<option value="all" class="text-slate-800">Todas as Unidades (${state.units.length})</option>` +
+        state.units.map(u => `<option value="${escapeHtml(u.id)}" class="text-slate-800">${escapeHtml(u.sigla)}</option>`).join('');
+
+      if (currentVal !== 'all' && state.units.some(u => u.id === currentVal)) {
+        select.value = currentVal;
+      } else {
+        state.globalFilterId = 'all';
+        select.value = 'all';
+      }
+
+      const banner = document.getElementById('activeFilterBanner');
+      if (state.globalFilterId !== 'all' && state.activeTab !== 'tab-input') {
+        const u = state.units.find(x => x.id === state.globalFilterId);
+        document.getElementById('activeFilterName').textContent = u ? u.sigla : '';
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function renderUnitPills() {
+      const container = document.getElementById('unitPillsContainer');
+      container.innerHTML = state.units.map(u => {
+        const m = computeUnitMetrics(u);
+        const isActive = u.id === state.selectedUnitId;
+        const dotClass = m.hasData
+          ? (m.isConsistent ? 'bg-emerald-400' : 'bg-amber-400')
+          : 'bg-slate-300';
+
+        const btnClass = isActive
+          ? 'bg-[#004A8D] text-white border-[#004A8D] shadow-sm'
+          : 'bg-white text-slate-700 border-slate-200 hover:border-[#004A8D] hover:text-[#004A8D]';
+
+        return `
+          <button type="button" data-select-unit="${escapeHtml(u.id)}"
+            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-extrabold transition cursor-pointer ${btnClass}">
+            <span class="w-2 h-2 rounded-full ${dotClass}"></span>
+            <span>${escapeHtml(u.sigla)}</span>
+            ${m.ativos > 0 ? `<span class="px-1.5 py-0.5 rounded-md text-[10px] ${isActive ? 'bg-white/20 text-white' : 'bg-blue-50 text-[#004A8D]'}">${m.ativos}</span>` : ''}
+          </button>
+        `;
+      }).join('');
+
+      container.querySelectorAll('[data-select-unit]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedUnitId = btn.dataset.selectUnit;
+          renderInputTab();
+        });
+      });
+    }
+
+    function renderCoursesList(u) {
+      const container = document.getElementById('coursesListContainer');
+      const cursos = u.cursos || [];
+
+      if (cursos.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 rounded-xl border border-dashed border-slate-300 bg-slate-50/70 text-center">
+            <p class="text-xs sm:text-sm font-semibold text-slate-500">Nenhum curso técnico lançado para <strong>${escapeHtml(u.sigla)}</strong>.</p>
+            <p class="text-xs text-slate-400 mt-1">Clique em <strong>"Adicionar Curso"</strong> acima para registrar o código, curso, carga horária e matrículas ativas.</p>
+          </div>
+        `;
+      } else {
+        container.innerHTML = cursos.map((c, idx) => `
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-3">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Código</label>
+              <input type="text" data-cidx="${idx}" data-cfield="codigo" value="${escapeHtml(c.codigo || '')}"
+                placeholder="Ex: 2026.14.119"
+                class="course-field w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#004A8D]" />
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nome do Curso Técnico</label>
+              <input type="text" list="cursosSugestoes" data-cidx="${idx}" data-cfield="nome" value="${escapeHtml(c.nome)}"
+                placeholder="Ex: Técnico em Administração"
+                class="course-field w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#004A8D]" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Carga Horária (h)</label>
+              <input type="number" min="0" step="10" data-cidx="${idx}" data-cfield="ch" value="${toInt(c.ch)}"
+                placeholder="800"
+                class="course-field w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm text-center font-semibold focus:outline-none focus:ring-2 focus:ring-[#004A8D]" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-[#004A8D] mb-1">Matrículas Ativas</label>
+              <input type="number" min="0" step="1" data-cidx="${idx}" data-cfield="ativos" value="${toInt(c.ativos)}"
+                class="course-field w-full rounded-xl border border-blue-300 bg-white px-3 py-2 text-xs sm:text-sm text-center font-extrabold text-[#004A8D] focus:outline-none focus:ring-2 focus:ring-[#004A8D]" />
+            </div>
+            <div class="sm:col-span-1 flex justify-end">
+              <button type="button" data-remove-course="${idx}" title="Remover curso"
+                class="p-2.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      container.querySelectorAll('.course-field').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const idx = parseInt(e.target.dataset.cidx, 10);
+          const field = e.target.dataset.cfield;
+          if (!u.cursos[idx]) return;
+          u.cursos[idx][field] = (field === 'nome' || field === 'codigo') ? e.target.value : toInt(e.target.value);
+          persistState();
+          updateBlockSummariesAndConsistency(u);
+          renderHeaderControls();
+          renderUnitPills();
+        });
+      });
+
+      container.querySelectorAll('[data-remove-course]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.removeCourse, 10);
+          u.cursos.splice(idx, 1);
+          persistState();
+          renderCoursesList(u);
+          updateBlockSummariesAndConsistency(u);
+          renderHeaderControls();
+          renderUnitPills();
+        });
+      });
+
+      refreshIcons();
+    }
+
+    function updateBlockSummariesAndConsistency(u) {
+      const m = computeUnitMetrics(u);
+
+      document.getElementById('block1TotalAtivos').textContent = m.ativosCursos;
+      document.getElementById('block2TotalAtivos').textContent = m.ativosSeries;
+      document.getElementById('block2TotalEvadidos').textContent = m.evadidos;
+      document.getElementById('block2TaxaEvasao').textContent = formatPct(m.taxaEvasao);
+
+      const banner = document.getElementById('consistencyBanner');
+      const iconBox = document.getElementById('consistencyIcon');
+      const textBox = document.getElementById('consistencyText');
+
+      if (m.ativosCursos === 0 && m.ativosSeries === 0) {
+        banner.className = 'rounded-xl p-4 border bg-slate-50 border-slate-200 text-slate-600 flex items-center gap-3 transition-all';
+        iconBox.innerHTML = '<i data-lucide="info" class="w-5 h-5 text-slate-400"></i>';
+        textBox.innerHTML = `Aguardando lançamento de matrículas para <strong>${escapeHtml(u.sigla)}</strong>. Ao preencher o Bloco 1 e o Bloco 2, o sistema conferirá automaticamente se os totais batem.`;
+      } else if (m.ativosCursos === m.ativosSeries) {
+        banner.className = 'rounded-xl p-4 border bg-emerald-50 border-emerald-200 text-emerald-900 flex items-center gap-3 transition-all';
+        iconBox.innerHTML = '<i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600"></i>';
+        textBox.innerHTML = `Consistência validada em <strong>${escapeHtml(u.sigla)}</strong>: o total de matrículas ativas por curso (${m.ativosCursos}) confere exatamente com o total por série (${m.ativosSeries}).`;
+      } else {
+        const diff = Math.abs(m.ativosCursos - m.ativosSeries);
+        banner.className = 'rounded-xl p-4 border bg-amber-50 border-amber-300 text-amber-900 flex items-center gap-3 transition-all';
+        iconBox.innerHTML = '<i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600"></i>';
+        textBox.innerHTML = `Atenção em <strong>${escapeHtml(u.sigla)}</strong>: a soma dos cursos no Bloco 1 (<strong>${m.ativosCursos}</strong>) diverge da soma por série no Bloco 2 (<strong>${m.ativosSeries}</strong>) em <strong>${diff} ${diff === 1 ? 'matrícula' : 'matrículas'}</strong>.`;
+      }
+
+      refreshIcons();
+    }
+
+    function renderInputTab() {
+      renderUnitPills();
+      const u = getSelectedUnit();
+      if (!u) return;
+
+      document.getElementById('inputUnitSigla').value = u.sigla;
+      document.getElementById('inputAno1Ativos').value = toInt(u.series.ano1.ativos);
+      document.getElementById('inputAno1Evadidos').value = toInt(u.series.ano1.evadidos);
+      document.getElementById('inputAno2Ativos').value = toInt(u.series.ano2.ativos);
+      document.getElementById('inputAno2Evadidos').value = toInt(u.series.ano2.evadidos);
+      document.getElementById('inputAno3Ativos').value = toInt(u.series.ano3.ativos);
+      document.getElementById('inputAno3Evadidos').value = toInt(u.series.ano3.evadidos);
+
+      document.getElementById('inputPrev2027').value = toInt(u.previsao2027);
+      document.getElementById('inputExpansao').value = u.expansao || '';
+
+      document.getElementById('inputInstrumento').value = u.instrumentoJuridico || 'Sem Instrumento Formal';
+      document.getElementById('inputCodigo13').value = u.codigo13 || 'Não';
+      document.getElementById('inputProtocolo').value = u.protocoloTransferidos || 'Não';
+      document.getElementById('inputEnem').value = u.acompanhamentoEnem || 'Não';
+      document.getElementById('inputLocal').value = u.localAulas || 'Unidade Senac';
+      document.getElementById('inputApoio').value = u.apoioComplementar || 'Não oferece';
+      document.getElementById('inputRelato').value = u.relatoCampo || '';
+
+      renderCoursesList(u);
+      updateBlockSummariesAndConsistency(u);
+    }
+
+    // =========================================================================
+    // 4. RENDERIZAÇÃO DO DASHBOARD EXECUTIVO (ABAS 2 A 5)
+    // =========================================================================
+    function renderDashboard() {
+      const units = getFilteredUnits();
+      const list = units.map(computeUnitMetrics);
+
+      const totalAtivos = list.reduce((s, x) => s + x.ativos, 0);
+      const totalEvadidos = list.reduce((s, x) => s + x.evadidos, 0);
+      const totalVinculados = totalAtivos + totalEvadidos;
+      const taxaMedia = totalVinculados > 0 ? (totalEvadidos / totalVinculados) * 100 : 0;
+      const totalPrev2027 = list.reduce((s, x) => s + x.previsao2027, 0);
+
+      // Banner estado vazio
+      const emptyBanner = document.getElementById('emptyDataBanner');
+      emptyBanner.classList.toggle('hidden', totalVinculados > 0 || totalPrev2027 > 0);
+
+      // KPIs Aba 2
+      document.getElementById('kpiAtivos').textContent = totalAtivos.toLocaleString('pt-BR');
+      document.getElementById('kpiAtivosSub').textContent =
+        units.length === 1 ? `Unidade ${units[0].sigla}` : `Consolidado de ${units.length} unidades`;
+      document.getElementById('kpiEvadidos').textContent = totalEvadidos.toLocaleString('pt-BR');
+      document.getElementById('kpiEvadidosSub').textContent = `de ${totalVinculados.toLocaleString('pt-BR')} alunos vinculados`;
+      document.getElementById('kpiTaxaEvasao').textContent = formatPct(taxaMedia);
+      document.getElementById('kpiPrev2027').textContent = totalPrev2027.toLocaleString('pt-BR');
+      document.getElementById('badgeMediaEvasao').textContent = `Média: ${formatPct(taxaMedia)}`;
+
+      // Gráficos e tabela Aba 2
+      renderChartAtivasEvadidos(list, totalVinculados > 0);
+      renderChartTaxaEvasao(list, taxaMedia, totalVinculados > 0);
+      renderChartCursos(units);
+      renderChartSeries(list);
+      renderDetailedCoursesTable(units);
+
+      // Aba 3: Evasão & Campo
+      renderChartEvasaoSeries(list);
+      renderEvasionRanking(list);
+      renderFieldReports(units);
+
+      // Aba 4: Governança & Auditoria
+      renderGovernance(list);
+
+      // Aba 5: Horizonte 2027 & Ações
+      renderChartComparativo2027(list, totalAtivos, totalPrev2027);
+      renderExpansionTable(list);
+      renderEncaminhamentos();
+
+      refreshIcons();
+    }
+
+    // Gráfico 1: Matrículas Ativas vs Evadidos por Unidade
+    function renderChartAtivasEvadidos(list, hasData) {
+      destroyChart('ativasEvadidos');
+      document.getElementById('emptyChart1').classList.toggle('hidden', hasData);
+      if (!hasData) return;
+
+      const ctx = document.getElementById('chartAtivasEvadidos').getContext('2d');
+      charts.ativasEvadidos = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: list.map(x => x.sigla),
+          datasets: [
+            {
+              label: 'Matrículas Ativas',
+              data: list.map(x => x.ativos),
+              backgroundColor: '#004A8D',
+              borderRadius: 6
+            },
+            {
+              label: 'Alunos Evadidos',
+              data: list.map(x => x.evadidos),
+              backgroundColor: '#E11D48',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#F1F5F9' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // Gráfico 2: Taxa de Evasão (%) por Unidade + linha de média
+    function renderChartTaxaEvasao(list, taxaMedia, hasData) {
+      destroyChart('taxaEvasao');
+      document.getElementById('emptyChart2').classList.toggle('hidden', hasData);
+      if (!hasData) return;
+
+      const ctx = document.getElementById('chartTaxaEvasao').getContext('2d');
+      charts.taxaEvasao = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: list.map(x => x.sigla),
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Taxa de Evasão (%)',
+              data: list.map(x => Number(x.taxaEvasao.toFixed(1))),
+              backgroundColor: list.map(x => x.taxaEvasao > taxaMedia ? '#E11D48' : '#0066B3'),
+              borderRadius: 6
+            },
+            {
+              type: 'line',
+              label: `Média Geral (${formatPct(taxaMedia)})`,
+              data: list.map(() => Number(taxaMedia.toFixed(1))),
+              borderColor: '#F7941D',
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1).replace('.', ',')}%`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F1F5F9' },
+              ticks: { callback: v => v + '%' }
+            },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // Gráfico 3: Matrículas Ativas por Curso Técnico (Bloco 1)
+    function renderChartCursos(units) {
+      destroyChart('cursos');
+      const map = {};
+      units.forEach(u => {
+        (u.cursos || []).forEach(c => {
+          const rawNome = (c.nome || '').trim().replace(/\s+/g, ' ');
+          const displayNome = rawNome || 'Curso sem nome';
+          const key = displayNome.toLowerCase();
+          const ativos = toInt(c.ativos);
+          if (ativos > 0) {
+            if (!map[key]) map[key] = { label: displayNome, total: 0 };
+            map[key].total += ativos;
+          }
+        });
+      });
+
+      const entries = Object.values(map).sort((a, b) => b.total - a.total);
+      document.getElementById('emptyChart3').classList.toggle('hidden', entries.length > 0);
+      if (entries.length === 0) return;
+
+      const palette = ['#004A8D', '#0066B3', '#F7941D', '#0284C7', '#0EA5E9', '#64748B'];
+      const ctx = document.getElementById('chartCursos').getContext('2d');
+      charts.cursos = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: entries.map(e => e.label),
+          datasets: [{
+            label: 'Matrículas Ativas',
+            data: entries.map(e => e.total),
+            backgroundColor: entries.map((_, i) => palette[i % palette.length]),
+            borderRadius: 6,
+            barThickness: 22
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, grid: { color: '#F1F5F9' } },
+            y: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // Gráfico 4: Matrículas Ativas por Série (Bloco 2)
+    function renderChartSeries(list) {
+      destroyChart('series');
+      const s1 = list.reduce((s, x) => s + x.a1, 0);
+      const s2 = list.reduce((s, x) => s + x.a2, 0);
+      const s3 = list.reduce((s, x) => s + x.a3, 0);
+      const hasData = (s1 + s2 + s3) > 0;
+      document.getElementById('emptyChart4').classList.toggle('hidden', hasData);
+      if (!hasData) return;
+
+      const ctx = document.getElementById('chartSeries').getContext('2d');
+      charts.series = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['1º Ano EM', '2º Ano EM', '3º Ano EM'],
+          datasets: [{
+            data: [s1, s2, s3],
+            backgroundColor: ['#0EA5E9', '#004A8D', '#F7941D'],
+            borderWidth: 2,
+            borderColor: '#FFFFFF'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '62%',
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    // Tabela Detalhada de Cursos / Turmas Ofertadas (Aba 2)
+    function renderDetailedCoursesTable(units) {
+      const tbody = document.getElementById('detailedCoursesTableBody');
+      const badge = document.getElementById('badgeTotalTurmas');
+      const rows = [];
+
+      units.forEach(u => {
+        (u.cursos || []).forEach(c => {
+          const codigo = (c.codigo || '').trim();
+          const nome = (c.nome || '').trim();
+          const ch = toInt(c.ch);
+          const ativos = toInt(c.ativos);
+          if (codigo || nome || ativos > 0) {
+            rows.push({ sigla: u.sigla, codigo, nome: nome || 'Curso sem nome', ch, ativos });
+          }
+        });
+      });
+
+      badge.textContent = `${rows.length} ${rows.length === 1 ? 'registro' : 'registros'}`;
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="py-6 px-4 text-center text-xs text-slate-400">
+              Nenhum curso ou turma cadastrado ainda. Adicione os cursos no Bloco 1 da Aba 1.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-3 px-4 font-extrabold text-[#004A8D] whitespace-nowrap">${escapeHtml(r.sigla)}</td>
+          <td class="py-3 px-3 text-slate-700 font-medium">
+            ${r.codigo ? `<span class="inline-block mr-2 px-2 py-0.5 rounded-md bg-blue-50 text-[#004A8D] border border-blue-200 text-[11px] font-bold">${escapeHtml(r.codigo)}</span>` : ''}
+            <span>${escapeHtml(r.nome)}</span>
+          </td>
+          <td class="py-3 px-3 text-center text-slate-600 font-semibold">${r.ch > 0 ? `${r.ch}h` : '—'}</td>
+          <td class="py-3 px-4 text-right font-extrabold text-[#004A8D]">${r.ativos}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Gráfico Aba 3: Evasão por Série por Unidade
+    function renderChartEvasaoSeries(list) {
+      destroyChart('evasaoSeries');
+      const totalEv = list.reduce((s, x) => s + x.evadidos, 0);
+      document.getElementById('emptyChartEvasao').classList.toggle('hidden', totalEv > 0);
+      if (totalEv === 0) return;
+
+      const ctx = document.getElementById('chartEvasaoSeries').getContext('2d');
+      charts.evasaoSeries = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: list.map(x => x.sigla),
+          datasets: [
+            { label: '1º Ano EM', data: list.map(x => x.e1), backgroundColor: '#FB7185', borderRadius: 4 },
+            { label: '2º Ano EM', data: list.map(x => x.e2), backgroundColor: '#E11D48', borderRadius: 4 },
+            { label: '3º Ano EM', data: list.map(x => x.e3), backgroundColor: '#9F1239', borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } },
+          scales: {
+            x: { stacked: true, grid: { display: false } },
+            y: { stacked: true, beginAtZero: true, grid: { color: '#F1F5F9' } }
+          }
+        }
+      });
+    }
+
+    // Ranking de Risco Aba 3
+    function renderEvasionRanking(list) {
+      const container = document.getElementById('evasionRankingList');
+      const sorted = [...list].sort((a, b) => b.taxaEvasao - a.taxaEvasao);
+
+      if (sorted.every(x => x.vinculados === 0)) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">Sem dados numéricos preenchidos para ranqueamento.</p>`;
+        return;
+      }
+
+      container.innerHTML = sorted.map((x, idx) => {
+        const pct = Math.min(100, Math.max(0, x.taxaEvasao));
+        const barColor = pct >= 30 ? 'bg-rose-600' : pct >= 15 ? 'bg-amber-500' : 'bg-emerald-500';
+        const badgeColor = pct >= 30 ? 'bg-rose-50 text-rose-700' : pct >= 15 ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700';
+
+        return `
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-white border border-slate-200 text-[11px] font-bold text-slate-600 flex items-center justify-center">${idx + 1}</span>
+                <span class="text-xs sm:text-sm font-extrabold text-[#004A8D]">${escapeHtml(x.sigla)}</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${badgeColor}">
+                ${formatPct(x.taxaEvasao)} (${x.evadidos} evad.)
+              </span>
+            </div>
+            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div class="h-full rounded-full ${barColor}" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Relatos de Campo Aba 3
+    function renderFieldReports(units) {
+      const grid = document.getElementById('fieldReportsGrid');
+      grid.innerHTML = units.map(u => `
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <span class="text-sm font-extrabold text-[#004A8D]">${escapeHtml(u.sigla)}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#004A8D]">${escapeHtml(u.localAulas)}</span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              ${u.relatoCampo ? escapeHtml(u.relatoCampo) : '<span class="italic text-slate-400">Sem relato registrado.</span>'}
+            </p>
+          </div>
+          <div class="pt-2 border-t border-slate-200/70 text-[11px] text-slate-500">
+            <strong>Apoio:</strong> ${escapeHtml(u.apoioComplementar)}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Aba 4: Governança & Auditoria
+    function renderGovernance(list) {
+      const total = list.length;
+      const actOk = list.filter(x => x.u.instrumentoJuridico === 'Acordo de Cooperação Técnica').length;
+      const cod13Ok = list.filter(x => x.u.codigo13 === 'Sim').length;
+      const protOk = list.filter(x => x.u.protocoloTransferidos === 'Sim').length;
+      const consistOk = list.filter(x => x.isConsistent).length;
+
+      document.getElementById('govCountAct').textContent = `${actOk}/${total}`;
+      document.getElementById('govCountCod13').textContent = `${cod13Ok}/${total}`;
+      document.getElementById('govCountProt').textContent = `${protOk}/${total}`;
+      document.getElementById('govCountConsist').textContent = `${consistOk}/${total}`;
+
+      const pill = (ok, labelOk, labelNo) => ok
+        ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">${labelOk}</span>`
+        : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">${labelNo}</span>`;
+
+      const tbody = document.getElementById('governanceTableBody');
+      tbody.innerHTML = list.map(x => {
+        const u = x.u;
+        const isAct = u.instrumentoJuridico === 'Acordo de Cooperação Técnica';
+        const isEnem = u.acompanhamentoEnem !== 'Não';
+
+        let auditBadge = '';
+        if (x.ativosCursos === 0 && x.ativosSeries === 0) {
+          auditBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500">Sem números</span>`;
+        } else if (x.isConsistent) {
+          auditBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">OK (${x.ativosCursos})</span>`;
+        } else {
+          auditBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">Diverg. (${x.ativosCursos} × ${x.ativosSeries})</span>`;
+        }
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-4 font-extrabold text-[#004A8D] whitespace-nowrap">${escapeHtml(u.sigla)}</td>
+            <td class="py-3 px-3">
+              ${pill(isAct, escapeHtml(u.instrumentoJuridico), escapeHtml(u.instrumentoJuridico))}
+            </td>
+            <td class="py-3 px-3 text-center">${pill(u.codigo13 === 'Sim', 'Sim', 'Não')}</td>
+            <td class="py-3 px-3 text-center">${pill(u.protocoloTransferidos === 'Sim', 'Sim', 'Não')}</td>
+            <td class="py-3 px-3 text-center">${pill(isEnem, escapeHtml(u.acompanhamentoEnem), 'Não')}</td>
+            <td class="py-3 px-3 text-xs text-slate-600">
+              <div><strong>${escapeHtml(u.localAulas)}</strong></div>
+              <div class="text-slate-400">${escapeHtml(u.apoioComplementar)}</div>
+            </td>
+            <td class="py-3 px-4 text-center whitespace-nowrap">${auditBadge}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Aba 5: Comparativo 2027
+    function renderChartComparativo2027(list, totalAtivos, totalPrev2027) {
+      destroyChart('comp2027');
+      document.getElementById('badge2027Delta').textContent =
+        `${totalAtivos.toLocaleString('pt-BR')} Atuais → ${totalPrev2027.toLocaleString('pt-BR')} Previstas`;
+
+      const hasData = totalAtivos > 0 || totalPrev2027 > 0;
+      document.getElementById('emptyChart2027').classList.toggle('hidden', hasData);
+      if (!hasData) return;
+
+      const ctx = document.getElementById('chartComparativo2027').getContext('2d');
+      charts.comp2027 = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: list.map(x => x.sigla),
+          datasets: [
+            {
+              label: 'Matrículas Ativas Atuais',
+              data: list.map(x => x.ativos),
+              backgroundColor: '#004A8D',
+              borderRadius: 6
+            },
+            {
+              label: 'Previsão 2027',
+              data: list.map(x => x.previsao2027),
+              backgroundColor: '#F7941D',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#F1F5F9' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // Aba 5: Tabela de Expansão
+    function renderExpansionTable(list) {
+      const tbody = document.getElementById('expansionTableBody');
+      tbody.innerHTML = list.map(x => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-3 px-4 font-extrabold text-[#004A8D] whitespace-nowrap">${escapeHtml(x.sigla)}</td>
+          <td class="py-3 px-3 text-right font-bold text-slate-700">${x.ativos}</td>
+          <td class="py-3 px-3 text-right font-extrabold text-[#F7941D]">${x.previsao2027}</td>
+          <td class="py-3 px-4 text-xs text-slate-600">${x.u.expansao ? escapeHtml(x.u.expansao) : '—'}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Aba 5: Encaminhamentos Estratégicos Editáveis
+    function renderEncaminhamentos() {
+      const grid = document.getElementById('encaminhamentosGrid');
+      grid.innerHTML = state.encaminhamentos.map((enc, idx) => `
+        <div class="bg-white/10 border border-white/15 rounded-xl p-4 space-y-2">
+          <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F7941D] text-white">
+            ${escapeHtml(enc.etiqueta)}
+          </span>
+          <input type="text" data-enc-idx="${idx}" data-enc-field="titulo" value="${escapeHtml(enc.titulo)}"
+            class="enc-input w-full bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5 text-sm font-bold text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-[#F7941D]" />
+          <textarea rows="4" data-enc-idx="${idx}" data-enc-field="descricao"
+            class="enc-input w-full bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs text-blue-50 leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#F7941D]">${escapeHtml(enc.descricao)}</textarea>
+        </div>
+      `).join('');
+
+      grid.querySelectorAll('.enc-input').forEach(el => {
+        el.addEventListener('input', (e) => {
+          const idx = parseInt(e.target.dataset.encIdx, 10);
+          const field = e.target.dataset.encField;
+          if (!state.encaminhamentos[idx]) return;
+          state.encaminhamentos[idx][field] = e.target.value;
+          persistState();
+        });
+      });
+    }
+
+    // =========================================================================
+    // 5. NAVEGAÇÃO, EVENTOS E IMPORTAÇÃO / EXPORTAÇÃO JSON
+    // =========================================================================
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const isCurrent = btn.dataset.tab === tabId;
+        btn.classList.toggle('active', isCurrent);
+        if (isCurrent) {
+          btn.className = 'tab-btn active flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition cursor-pointer bg-[#F7941D] text-white shadow-sm';
+        } else {
+          btn.className = 'tab-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition cursor-pointer text-blue-100 hover:bg-white/10';
+        }
+      });
+
+      renderHeaderControls();
+      if (tabId !== 'tab-input') {
+        renderDashboard();
+      }
+    }
+
+    function downloadJson(filename, dataObj) {
+      const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function bindEvents() {
+      // Navegação por abas
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+
+      document.getElementById('btnGoToInput').addEventListener('click', () => switchTab('tab-input'));
+
+      // Filtro global
+      document.getElementById('globalUnitFilter').addEventListener('change', (e) => {
+        state.globalFilterId = e.target.value;
+        renderHeaderControls();
+        if (state.activeTab !== 'tab-input') renderDashboard();
+      });
+
+      document.getElementById('btnClearFilter').addEventListener('click', () => {
+        state.globalFilterId = 'all';
+        renderHeaderControls();
+        renderDashboard();
+      });
+
+      // Imprimir / PDF
+      document.getElementById('btnPrint').addEventListener('click', () => {
+        renderDashboard();
+        setTimeout(() => window.print(), 250);
+      });
+
+      // Adicionar Nova Unidade
+      document.getElementById('btnAddUnit').addEventListener('click', () => {
+        const newUnit = sanitizeUnit({
+          id: 'cep-' + Date.now(),
+          sigla: `CEP ${state.units.length + 1}`
+        });
+        state.units.push(newUnit);
+        state.selectedUnitId = newUnit.id;
+        persistState();
+        renderHeaderControls();
+        renderInputTab();
+        showToast(`Unidade ${newUnit.sigla} adicionada!`);
+      });
+
+      // Remover Unidade
+      document.getElementById('btnDeleteUnit').addEventListener('click', () => {
+        if (state.units.length <= 1) {
+          showToast('É necessário manter pelo menos uma unidade cadastrada.');
+          return;
+        }
+        const u = getSelectedUnit();
+        if (!u) return;
+        openConfirmModal(
+          'Remover Unidade',
+          `Deseja realmente remover a unidade "${u.sigla}" e todos os seus dados lançados?`,
+          () => {
+            state.units = state.units.filter(x => x.id !== u.id);
+            state.selectedUnitId = state.units[0].id;
+            if (state.globalFilterId === u.id) state.globalFilterId = 'all';
+            persistState();
+            renderHeaderControls();
+            renderInputTab();
+            showToast(`Unidade ${u.sigla} removida.`);
+          }
+        );
+      });
+
+      // Editar Sigla da Unidade
+      document.getElementById('inputUnitSigla').addEventListener('input', (e) => {
+        const u = getSelectedUnit();
+        if (!u) return;
+        u.sigla = e.target.value.toUpperCase();
+        persistState();
+        renderUnitPills();
+        renderHeaderControls();
+        updateBlockSummariesAndConsistency(u);
+      });
+
+      // Adicionar Curso no Bloco 1
+      document.getElementById('btnAddCourse').addEventListener('click', () => {
+        const u = getSelectedUnit();
+        if (!u) return;
+        u.cursos.push({ codigo: '', nome: '', ch: 800, ativos: 0 });
+        persistState();
+        renderCoursesList(u);
+        updateBlockSummariesAndConsistency(u);
+      });
+
+      // Campos do Bloco 2 (Séries)
+      const seriesMap = [
+        ['inputAno1Ativos', 'ano1', 'ativos'],
+        ['inputAno1Evadidos', 'ano1', 'evadidos'],
+        ['inputAno2Ativos', 'ano2', 'ativos'],
+        ['inputAno2Evadidos', 'ano2', 'evadidos'],
+        ['inputAno3Ativos', 'ano3', 'ativos'],
+        ['inputAno3Evadidos', 'ano3', 'evadidos']
+      ];
+      seriesMap.forEach(([elId, anoKey, fieldKey]) => {
+        document.getElementById(elId).addEventListener('input', (e) => {
+          const u = getSelectedUnit();
+          if (!u) return;
+          u.series[anoKey][fieldKey] = toInt(e.target.value);
+          persistState();
+          updateBlockSummariesAndConsistency(u);
+          renderHeaderControls();
+          renderUnitPills();
+        });
+      });
+
+      // Bloco 3 e Bloco 4
+      const directFields = [
+        ['inputPrev2027', 'previsao2027', true],
+        ['inputExpansao', 'expansao', false],
+        ['inputInstrumento', 'instrumentoJuridico', false],
+        ['inputCodigo13', 'codigo13', false],
+        ['inputProtocolo', 'protocoloTransferidos', false],
+        ['inputEnem', 'acompanhamentoEnem', false],
+        ['inputLocal', 'localAulas', false],
+        ['inputApoio', 'apoioComplementar', false],
+        ['inputRelato', 'relatoCampo', false]
+      ];
+      directFields.forEach(([elId, prop, isNum]) => {
+        const el = document.getElementById(elId);
+        const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+        el.addEventListener(evt, (e) => {
+          const u = getSelectedUnit();
+          if (!u) return;
+          u[prop] = isNum ? toInt(e.target.value) : e.target.value;
+          persistState();
+          if (isNum) {
+            renderHeaderControls();
+            renderUnitPills();
+          }
+        });
+      });
+
+      // Exportar só esta unidade
+      document.getElementById('btnExportSingleUnit').addEventListener('click', () => {
+        const u = getSelectedUnit();
+        if (!u) return;
+        const safeName = u.sigla.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        downloadJson(`senac_unidade_${safeName}.json`, {
+          type: 'senac_single_unit',
+          version: 2,
+          exportedAt: new Date().toISOString(),
+          unit: u
+        });
+        showToast(`Arquivo JSON de ${u.sigla} exportado!`);
+      });
+
+      // Exportar Backup Completo
+      document.getElementById('btnExportAll').addEventListener('click', () => {
+        downloadJson('senac_am_consolidado_completo.json', {
+          type: 'senac_full_backup',
+          version: 2,
+          exportedAt: new Date().toISOString(),
+          units: state.units,
+          encaminhamentos: state.encaminhamentos
+        });
+        showToast('Backup completo exportado em JSON!');
+      });
+
+      // Importar / Mesclar JSON(s)
+      const fileInput = document.getElementById('jsonImportInput');
+      document.getElementById('btnImportJson').addEventListener('click', () => {
+        fileInput.value = '';
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        let mergedCount = 0;
+        for (const file of files) {
+          try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+
+            const incomingUnits = [];
+            if (data.unit) {
+              incomingUnits.push(sanitizeUnit(data.unit));
+            } else if (Array.isArray(data.units)) {
+              data.units.forEach(u => incomingUnits.push(sanitizeUnit(u)));
+            } else if (data.sigla) {
+              incomingUnits.push(sanitizeUnit(data));
+            }
+
+            incomingUnits.forEach(inc => {
+              const idx = state.units.findIndex(
+                x => x.id === inc.id || x.sigla.toUpperCase() === inc.sigla.toUpperCase()
+              );
+              if (idx >= 0) {
+                state.units[idx] = inc;
+              } else {
+                state.units.push(inc);
+              }
+              mergedCount++;
+            });
+
+            if (Array.isArray(data.encaminhamentos) && data.encaminhamentos.length > 0) {
+              state.encaminhamentos = data.encaminhamentos;
+            }
+          } catch (err) {
+            console.error('Erro ao importar arquivo:', file.name, err);
+          }
+        }
+
+        if (mergedCount > 0) {
+          persistState();
+          renderHeaderControls();
+          renderInputTab();
+          if (state.activeTab !== 'tab-input') renderDashboard();
+          showToast(`${mergedCount} ${mergedCount === 1 ? 'unidade importada/mesclada' : 'unidades importadas/mescladas'} com sucesso!`);
+        } else {
+          showToast('Nenhum dado válido encontrado nos arquivos selecionados.');
+        }
+      });
+
+      // Limpar Dados Numéricos
+      document.getElementById('btnClearNumeric').addEventListener('click', () => {
+        openConfirmModal(
+          'Limpar Dados Numéricos',
+          'Isso zerará os cursos, matrículas, evasões e previsões de 2027 de TODAS as unidades, mantendo os dados qualitativos e de governança. Deseja continuar?',
+          () => {
+            state.units.forEach(u => {
+              u.cursos = [];
+              u.series = emptySeries();
+              u.previsao2027 = 0;
+            });
+            persistState();
+            renderHeaderControls();
+            renderInputTab();
+            if (state.activeTab !== 'tab-input') renderDashboard();
+            showToast('Todos os dados numéricos foram zerados.');
+          }
+        );
+      });
+
+      // Modal de Confirmação
+      document.getElementById('btnCloseConfirm').addEventListener('click', closeConfirmModal);
+      document.getElementById('btnCancelConfirm').addEventListener('click', closeConfirmModal);
+      document.getElementById('btnAcceptConfirm').addEventListener('click', () => {
+        if (typeof confirmCallback === 'function') confirmCallback();
+        closeConfirmModal();
+      });
+    }
+
+    // =========================================================================
+    // 6. INICIALIZAÇÃO
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      bindEvents();
+      renderHeaderControls();
+      renderInputTab();
+      refreshIcons();
+    });
+  </script>
+</body>
+</html>
