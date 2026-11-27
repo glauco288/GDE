@@ -1,0 +1,230 @@
+{
+  "type": "senac_full_backup",
+  "version": 2,
+  "exportedAt": "2026-11-27T14:08:54.744Z",
+  "units": [
+    {
+      "id": "cep-mpr",
+      "sigla": "CEP MPR",
+      "cursos": [],
+      "series": {
+        "ano1": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano2": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano3": {
+          "ativos": 0,
+          "evadidos": 0
+        }
+      },
+      "previsao2027": 0,
+      "expansao": "Expansão intermunicipal para Nhamundá, Urucará, Boa Vista do Ramos e Barreirinha (25 matrículas por município = 100 atendimentos).",
+      "instrumentoJuridico": "Acordo de Cooperação Técnica",
+      "codigo13": "Sim",
+      "protocoloTransferidos": "Não",
+      "acompanhamentoEnem": "Sim - Via Escola Parceira",
+      "localAulas": "Ambos os Locais",
+      "apoioComplementar": "Não oferece",
+      "relatoCampo": "Transporte sob responsabilidade do aluno. Contrapartida das escolas em salas, laboratório e internet; escola parceira acompanha desempenho no ENEM."
+    },
+    {
+      "id": "cep-lsr",
+      "sigla": "CEP LSR",
+      "cursos": [],
+      "series": {
+        "ano1": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano2": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano3": {
+          "ativos": 0,
+          "evadidos": 0
+        }
+      },
+      "previsao2027": 0,
+      "expansao": "Projeção de novas turmas incluindo Téc. em Administração, Redes, Informática e Téc. em Rádio e TV.",
+      "instrumentoJuridico": "Sem Instrumento Formal",
+      "codigo13": "Sim",
+      "protocoloTransferidos": "Não",
+      "acompanhamentoEnem": "Não",
+      "localAulas": "Unidade Senac",
+      "apoioComplementar": "Material Didático e Infraestrutura",
+      "relatoCampo": "Transporte é um dos maiores motivadores de evasão, pois grande parte dos alunos reside em áreas rurais. Materiais digitais desenvolvidos pelos docentes via LAB S e Canva Code."
+    },
+    {
+      "id": "cep-jt",
+      "sigla": "CEP JT",
+      "cursos": [],
+      "series": {
+        "ano1": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano2": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano3": {
+          "ativos": 0,
+          "evadidos": 0
+        }
+      },
+      "previsao2027": 0,
+      "expansao": "Projeção de ampliação para 7 escolas parceiras (25 vagas por turma).",
+      "instrumentoJuridico": "Apenas PSG",
+      "codigo13": "Não",
+      "protocoloTransferidos": "Não",
+      "acompanhamentoEnem": "Não",
+      "localAulas": "Ambos os Locais",
+      "apoioComplementar": "Material Didático e Infraestrutura",
+      "relatoCampo": "Aulas em ambos os locais com deslocamento pactuado em cronograma. Necessário alinhar registro do Código 13 e conceito de saídas intermediárias."
+    },
+    {
+      "id": "cep-mbi",
+      "sigla": "CEP MBI",
+      "cursos": [],
+      "series": {
+        "ano1": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano2": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano3": {
+          "ativos": 0,
+          "evadidos": 0
+        }
+      },
+      "previsao2027": 0,
+      "expansao": "Previsão de ampliação para 3 escolas (30 alunos por turma).",
+      "instrumentoJuridico": "Apenas PSG",
+      "codigo13": "Não",
+      "protocoloTransferidos": "Não",
+      "acompanhamentoEnem": "Não",
+      "localAulas": "Unidade Senac",
+      "apoioComplementar": "Material Didático e Infraestrutura",
+      "relatoCampo": "Senac disponibiliza infraestrutura pedagógica e materiais didáticos. Necessário formalizar instrumento jurídico e padronizar Código 13."
+    },
+    {
+      "id": "cep-pjp",
+      "sigla": "CEP PJP",
+      "cursos": [],
+      "series": {
+        "ano1": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano2": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano3": {
+          "ativos": 0,
+          "evadidos": 0
+        }
+      },
+      "previsao2027": 0,
+      "expansao": "Previsão de oferta para 02 cursos, podendo ser ampliado.",
+      "instrumentoJuridico": "Sem Instrumento Formal",
+      "codigo13": "Não",
+      "protocoloTransferidos": "Não",
+      "acompanhamentoEnem": "Não",
+      "localAulas": "Unidade Senac",
+      "apoioComplementar": "Material Didático e Infraestrutura",
+      "relatoCampo": "Parceria viabilizada a partir de interesse manifestado pela escola. Aulas no turno noturno (18h às 22h) na unidade Senac. Necessário formalizar ACT e Código 13."
+    },
+    {
+      "id": "cep-1795756960406",
+      "sigla": "CEP 7",
+      "cursos": [],
+      "series": {
+        "ano1": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano2": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano3": {
+          "ativos": 0,
+          "evadidos": 0
+        }
+      },
+      "previsao2027": 0,
+      "expansao": "",
+      "instrumentoJuridico": "Sem Instrumento Formal",
+      "codigo13": "Não",
+      "protocoloTransferidos": "Não",
+      "acompanhamentoEnem": "Não",
+      "localAulas": "Unidade Senac",
+      "apoioComplementar": "Não oferece",
+      "relatoCampo": ""
+    },
+    {
+      "id": "cep-1795788301453",
+      "sigla": "CEP CAP",
+      "cursos": [
+        {
+          "codigo": "2026.16.43",
+          "nome": "Técnico em Administração",
+          "ch": 800,
+          "ativos": 39
+        }
+      ],
+      "series": {
+        "ano1": {
+          "ativos": 0,
+          "evadidos": 0
+        },
+        "ano2": {
+          "ativos": 7,
+          "evadidos": 4
+        },
+        "ano3": {
+          "ativos": 17,
+          "evadidos": 8
+        }
+      },
+      "previsao2027": 35,
+      "expansao": "",
+      "instrumentoJuridico": "Sem Instrumento Formal",
+      "codigo13": "Não",
+      "protocoloTransferidos": "Não",
+      "acompanhamentoEnem": "Não",
+      "localAulas": "Unidade Senac",
+      "apoioComplementar": "Não oferece",
+      "relatoCampo": ""
+    }
+  ],
+  "encaminhamentos": [
+    {
+      "id": "enc-1",
+      "etiqueta": "Proposta 01 • Governança",
+      "titulo": "Padronização Jurídica e Sistêmica (Minuta ACT + Código 13)",
+      "descricao": "Institucionalizar minuta padrão de Acordo de Cooperação Técnica para regularizar todas as unidades parceiras e uniformizar o lançamento de produção sob o Código 13 antes do ciclo 2027."
+    },
+    {
+      "id": "enc-2",
+      "etiqueta": "Proposta 02 • Retenção",
+      "titulo": "Estratégia de Retenção e Transporte junto à SEDUC",
+      "descricao": "Articular contrapartida de transporte escolar e apoio à permanência junto à SEDUC e Prefeituras, priorizando unidades com estudantes de zonas rurais e ribeirinhas."
+    },
+    {
+      "id": "enc-3",
+      "etiqueta": "Proposta 03 • Fluxo Acadêmico",
+      "titulo": "Protocolo Único de Transferidos e Acompanhamento ENEM",
+      "descricao": "Estabelecer diretriz estadual para acolhimento e complementação de carga horária de alunos transferidos e replicar o modelo de acompanhamento no ENEM junto às escolas parceiras."
+    }
+  ]
+}
